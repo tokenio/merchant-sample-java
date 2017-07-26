@@ -1,0 +1,14 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.0'
+    id "com.google.osdetector" version "1.4.0"
+}
+
+project.apply plugin: 'application'
+project.mainClassName = project.group + '.Application'
+
+dependencies {
+    compile group: 'io.token.sdk', name: 'tokenio-java-sdk', version: ver.tokenSdk
+    compile 'io.netty:netty-tcnative-boringssl-static:1.1.33.Fork26'
+}
+
+build.dependsOn(shadowJar)
