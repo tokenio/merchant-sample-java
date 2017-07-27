@@ -3,7 +3,6 @@ package io.token.sample;
 import static com.google.common.base.Charsets.UTF_8;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
 
-import com.google.gson.JsonParser;
 import io.token.proto.common.token.TokenProtos.Token;
 import com.google.common.io.Resources;
 import io.token.Member;
@@ -13,9 +12,14 @@ import io.token.security.UnsecuredFileSystemKeyStore;
 import spark.Spark;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.lang.IllegalArgumentException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Application main entry point.
@@ -46,12 +50,9 @@ public class Application {
 
         // Endpoint for transfering, called by client side after user approval
         Spark.post("/transfer", (req, res) -> {
-            String tokenId = new JsonParser()
-                    .parse(req.body())
-                    .getAsJsonObject()
-                    .get("tokenId")
-                    .getAsString();
-            
+            Map<String, String> formData = parseFormData(req.body());
+            String tokenId = formData.get("tokenId");
+
             // Make sure to get the token first, and check its validity
             Token token = loggedInMember.getToken(tokenId);
             // Redeem the token at the server, to move the funds
@@ -75,5 +76,24 @@ public class Application {
                 .connectTo(SANDBOX)
                 .withKeyStore(new UnsecuredFileSystemKeyStore(keys.toFile()))
                 .build();
+    }
+
+    /**
+     * Parse form data
+     */
+    private static Map<String, String> parseFormData(String query) {
+        try {
+            Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                int idx = pair.indexOf("=");
+                queryPairs.put(
+                        URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
+                        URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+            }
+            return queryPairs;
+        } catch (UnsupportedEncodingException ex) {
+            throw new IllegalArgumentException("Couldn't parse form data");
+        }
     }
 }

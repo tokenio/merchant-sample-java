@@ -17,5 +17,5 @@ in the `./keys` directory.
 2. In `app/src/main/java/io/token/sample/Application.java`, in the `tokenIO.login`
    call, change the memberId to the output from the setup program.
 4. Compile and run: `./gradlew shadowJar` ;
-   `java -jar setup/build/libs/setup-1.0.1-all.jar`
+   `java -jar app/build/libs/app-1.0.1-all.jar`
 5. Test by going to localhost:3000, and paying with the "Token PSD2" app, installed from the App Store
