@@ -1,2 +1,3 @@
 include 'app'
+include 'setup'
 rootProject.name='token-java-sample'

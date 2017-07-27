@@ -7,8 +7,10 @@ project.apply plugin: 'application'
 project.mainClassName = project.group + '.Application'
 
 dependencies {
+    compile group: 'com.google.code.gson', name: 'gson', version: ver.gson
+    compile group: 'com.sparkjava', name: 'spark-core', version: ver.sparkjava
     compile group: 'io.token.sdk', name: 'tokenio-java-sdk', version: ver.tokenSdk
-    compile 'io.netty:netty-tcnative-boringssl-static:1.1.33.Fork26'
+    compile group: 'io.token.rpc', name: 'tokenio-rpc-client-netty', version: ver.tokenRpc
 }
 
 build.dependsOn(shadowJar)

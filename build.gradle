@@ -20,6 +20,9 @@ allprojects {
 
     ext {
         ver = [
+	    gson: '2.8.0',
+	    sparkjava: '2.6.0',
+            tokenRpc: '1.0.84',
             tokenSdk: '1.0.47',
         ]
     }
