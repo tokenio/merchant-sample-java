@@ -22,7 +22,7 @@ allprojects {
         ver = [
 	    sparkjava: '2.6.0',
             tokenRpc: '1.0.84',
-            tokenSdk: '1.0.47',
+            tokenSdk: '1.0.51',
         ]
     }
 
