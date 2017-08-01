@@ -6,7 +6,7 @@
   username `marianoTest5` with another alphanumeric string.
 * Compile: `./gradlew shadowJar`
 * Run the setup utility: `java -jar setup/build/libs/setup-1.0.1-all.jar`
-* Notice the username output at the end of the output.
+* Notice the member ID at the end of the console output.
 
 This creates a new member on the Token network and stores its private keys
 in the `./keys` directory.
