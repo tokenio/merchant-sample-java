@@ -1,7 +1,9 @@
+merchant_member_id.txt
+keys/
+
 .gradle
 .idea
 build/
-keys/
 log/
 classes/
 

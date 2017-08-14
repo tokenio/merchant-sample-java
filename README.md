@@ -1,21 +1,27 @@
 ## Token Merchant Checkout Sample: Java
 
-**To create a member:**
+This sample code shows how to enable the Token Merchant Checkout
+experience on a simple web server.
 
-* Edit `setup/src/main/java/io/token/setup/Application.java` and replace the
-  username `marianoTest5` with another alphanumeric string.
-* Compile: `./gradlew shadowJar`
-* Run the setup utility: `java -jar setup/build/libs/setup-1.0.1-all.jar`
-* Notice the member ID at the end of the console output.
+To build this code, you need Java Development Kit (JDK) version 7 or later.
 
-This creates a new member on the Token network and stores its private keys
-in the `./keys` directory.
+To build, `./gradlew shadowJar`.
 
-**To run the server:**
+To run, `java -jar app/build/libs/app-*.jar`
 
-1. In `app/src/main/resources/index.html`, change the username to the one used above.
-2. In `app/src/main/java/io/token/sample/Application.java`, in the `tokenIO.login`
-   call, change the memberId to the output from the setup program.
-4. Compile and run: `./gradlew shadowJar` ;
-   `java -jar app/build/libs/app-1.0.1-all.jar`
-5. Test by going to localhost:3000, and paying with the "Token PSD2" app, installed from the App Store
+This starts up a server.
+
+The first time you run the server, it creates a new Member (Token user account).
+It saves the Member's private keys in the `app/keys` directory and its ID
+in the `app/merchant_member_id.txt`. In subsequent runs, the server uses this ID
+and these keys to log the Member in.
+
+The server operates in Token's Sandbox environment. This testing environment
+lets you try out UI and payment flows without moving real money.
+
+The server shows a web page at `localhost:3000`. The page has a checkout button.
+Clicking the button starts the Token merchant payment flow.
+The server handles endorsed payments by redeeming tokens.
+
+Test by going to `localhost:3000` and paying with the "Token PSD2" app,
+installed from the App Store.

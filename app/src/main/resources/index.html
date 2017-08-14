@@ -5,45 +5,6 @@
   </head>
   <body>
     <button id="tokenPayBtn">Quick Checkout</button>
-
-    <script>
-      function shippingCb(address, tokenCallback) {
-        tokenCallback({                    // Can return different prices based on address
-            shippingMethods: [
-                {
-                    id: '0',
-                    name: 'Standard Ground (5-9 business days)',
-                    deliveryTime: '5 - 9 Business Days',
-                    cost: 0
-                },
-            ],
-            tax: 0
-        });
-      }
-
-      // Initializes the Quick Checkout Button
-      Token.bindPayButton(
-         'tokenPayBtn',                  // ID of the page's button element
-         {                               // Terms
-             username: 'marianoTest5310',  // Merchant username
-             amount: 4.99,               // Amount
-             currency: 'EUR',            // Currency
-             destinations: [{            // Transfer destinations
-                 account: {
-                     sepa: {
-                         iban: 'DK5000440441116263'
-                     }
-                 }
-             }],
-         },
-         shippingCb,          // Shipping callback
-         function(data) {     // Success callbackata);
-             $.post('http://localhost:3000/transfer', data, function () {});
-         },
-         function(error) {    // Failure callback
-             console.log('Something\'s wrong!', error);
-         }
-       );
-  </script>
+    <script src="/script.js"></script>
   </body>
 </html>
