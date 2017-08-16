@@ -1,5 +1,5 @@
 function shippingCb(address, tokenCallback) {
-    tokenCallback({                    // Can return different prices based on address
+    tokenCallback({ // Can return price based on address
         shippingMethods: [
             {
                 id: '0',
@@ -14,14 +14,16 @@ function shippingCb(address, tokenCallback) {
 
 // Initializes the Quick Checkout Button
 Token.bindPayButton(
-    'tokenPayBtn',                  // ID of the page's button element
+    'tokenPayBtn',                  // ID of <button>
     {                               // Terms
-        username: '{alias}',        // Merchant username (filled in by Application.java)
+        username: '{alias}',        // Merchant username
+                                    // (filled in by server)
         amount: 4.99,               // Amount
         currency: 'EUR',            // Currency
         destinations: [{
-            // Transfer destinations. If your bank supports Token payments, you can use
-            // your Token member and account ID instead or in addition.
+            // Transfer destinations. If your bank supports
+            // Token payments, you can use your Token member
+            // and account ID instead or in addition.
             account: {
                 sepa: {
                     iban: 'DK5000440441116263'
@@ -31,7 +33,10 @@ Token.bindPayButton(
     },
     shippingCb,          // Shipping callback
     function(data) {     // Success callback
-        $.post('http://localhost:3000/transfer', data, function () {});
+        $.post(
+            'http://localhost:3000/transfer',
+            data,
+            function () {});
     },
     function(error) {    // Failure callback
         console.log('Something\'s wrong!', error);

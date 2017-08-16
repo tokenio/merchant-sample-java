@@ -58,7 +58,8 @@ public class Application {
             Map<String, String> formData = parseFormData(req.body());
             String tokenId = formData.get("tokenId");
 
-            // Make sure to get the token first, and check its validity
+            // Make sure to get the token first,
+            // and check its validity
             Token token = merchantMember.getToken(tokenId);
 
             // Redeem the token at the server, to move the funds
@@ -89,8 +90,9 @@ public class Application {
         return TokenIO.builder()
                 .connectTo(SANDBOX)
                 // This KeyStore reads private keys from files.
-                // Here, it's set up to read them from the ./keys directory.
-                .withKeyStore(new UnsecuredFileSystemKeyStore(keys.toFile()))
+                // Here, it's set up to read the ./keys dir.
+                .withKeyStore(new UnsecuredFileSystemKeyStore(
+                        keys.toFile()))
                 .build();
     }
 
