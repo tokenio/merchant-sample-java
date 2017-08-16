@@ -13,14 +13,13 @@ import io.token.proto.common.token.TokenProtos.Token;
 import io.token.security.UnsecuredFileSystemKeyStore;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -54,7 +53,7 @@ public class Application {
         // Initializes the server
         Spark.port(3000);
 
-        // Endpoint for transfer payment, called by client side after user approval.
+        // Endpoint for transfer payment, called by client side after user approves payment.
         Spark.post("/transfer", (req, res) -> {
             Map<String, String> formData = parseFormData(req.body());
             String tokenId = formData.get("tokenId");
@@ -104,7 +103,19 @@ public class Application {
      * @return Logged-in member.
      */
     private static Member loginMember(TokenIO tokenIO, String memberId) {
-        return tokenIO.login(memberId);
+        try {
+            return tokenIO.login(memberId);
+        } catch (StatusRuntimeException sre) {
+            if (sre.getStatus().getCode() == NOT_FOUND) {
+                // We think we have a member's ID and keys, but we can't log in.
+                // In the sandbox testing environment, this can happen:
+                // Sometimes, the member service erases the test members.
+                throw new RuntimeException(
+                        "Couldn't log in saved member, not found. Remove keys dir and try again.");
+            } else {
+                throw new RuntimeException(sre);
+            }
+        }
     }
 
     /**
@@ -125,50 +136,26 @@ public class Application {
     }
 
     /**
-     * We keep the ID of our merchant member in a file.
-     * If we see the file, try to read it and log in using the ID within.
-     * If we don't see the file, create a new Member.
+     * Log in existing member or create new member.
      *
      * @param tokenIO Token SDK client
      * @return Logged-in member
      */
     private static Member initializeMember(TokenIO tokenIO) {
-        String path = "./merchant_member_id.txt";
-        File memberIdFile = new File(path);
-        if (memberIdFile.exists() && !memberIdFile.isDirectory()) {
-            // We see the file, so log in existing member.
-            try {
-                String memberId = new String(Files.readAllBytes(Paths.get(path))).trim();
-                return loginMember(tokenIO, memberId);
-            } catch (IOException ex) {
-                throw new RuntimeException("Failed to read " + path);
-            } catch (StatusRuntimeException sre) {
-                if (sre.getStatus().getCode() == NOT_FOUND) {
-                    // We think we have a member's ID and keys, but we can't log in.
-                    // In the sandbox testing environment, this can happen:
-                    // Sometimes, the member service erases the test members.
+        // The UnsecuredFileSystemKeyStore stores keys in a directory
+        // named on the member's memberId, but with ":" replaced by "_".
+        // Look for such a directory.
+        //   If found, try to log in with that memberId
+        //   If not found, create a new member.
+        File keysDir = new File("./keys");
+        String[] paths = keysDir.list();
 
-                    // Fall through to create new member
-                } else {
-                    throw new RuntimeException(sre);
-                }
-            }
-        }
-        // We don't see the file
-        // (or we're falling through from a weird case),
-        // so create a new member.
-        // (Then save its ID so next time we know it exists.)
-        Member member = createMember(tokenIO);
-        try {
-            PrintWriter writer = new PrintWriter(path);
-            writer.print(member.memberId());
-            writer.close();
-            return member;
-        } catch (FileNotFoundException ex) {
-            System.out.printf("Failed to save " + path);
-            return member;
-        }
-
+        return Arrays.stream(paths)
+                .filter(p -> p.contains("_")) // find dir names containing "_"
+                .map(p -> p.replace("_", ":")) // member ID
+                .findFirst()
+                .map(memberId -> loginMember(tokenIO, memberId))
+                .orElse(createMember(tokenIO));
     }
 
     /**

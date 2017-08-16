@@ -2,8 +2,11 @@
 
 This sample code shows how to enable the Token Merchant Checkout
 experience on a simple web server.
+You can learn more about the Quick Checkout flow and relevant APIs at the
+[Merchant Quick Checkout](http://developer-beta.token.io/merchant-checkout/)
+documentation.
 
-To build this code, you need Java Development Kit (JDK) version 7 or later.
+To build this code, you need Java Development Kit (JDK) version 8 or later.
 
 To build, `./gradlew shadowJar`.
 
@@ -12,9 +15,8 @@ To run, `java -jar app/build/libs/app-*.jar`
 This starts up a server.
 
 The first time you run the server, it creates a new Member (Token user account).
-It saves the Member's private keys in the `app/keys` directory and its ID
-in the `app/merchant_member_id.txt`. In subsequent runs, the server uses this ID
-and these keys to log the Member in.
+It saves the Member's private keys in the `keys` directory.
+In subsequent runs, the server uses this ID these keys to log the Member in.
 
 The server operates in Token's Sandbox environment. This testing environment
 lets you try out UI and payment flows without moving real money.
