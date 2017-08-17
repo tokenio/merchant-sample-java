@@ -16,8 +16,10 @@ function shippingCb(address, tokenCallback) {
 Token.bindPayButton(
     'tokenPayBtn',                  // ID of <button>
     {                               // Terms
-        username: '{alias}',        // Merchant username
-                                    // (filled in by server)
+        alias: {                    // Merchant alias
+            type: 'USERNAME',
+            value: '{alias}'        // (filled in by server)
+        },
         amount: 4.99,               // Amount
         currency: 'EUR',            // Currency
         destinations: [{

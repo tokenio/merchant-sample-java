@@ -3,13 +3,16 @@ package io.token.sample;
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
+import static io.token.proto.common.alias.AliasProtos.Alias.Type.USERNAME;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
 import io.grpc.StatusRuntimeException;
 import io.token.Member;
 import io.token.TokenIO;
+import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.token.TokenProtos.Token;
+import io.token.proto.common.transfer.TransferProtos.Transfer;
 import io.token.security.UnsecuredFileSystemKeyStore;
 
 import java.io.File;
@@ -63,7 +66,7 @@ public class Application {
             Token token = merchantMember.getToken(tokenId);
 
             // Redeem the token at the server, to move the funds
-            merchantMember.redeemToken(token, 4.99, "EUR", "example");
+            Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example");
             return "";
         });
         // (If user closes browser before this function is called, we don't redeem the token.
@@ -72,7 +75,7 @@ public class Application {
 
         // Serve the web page and JS script:
         String script = Resources.toString(Resources.getResource("script.js"), UTF_8)
-                .replace("{alias}", merchantMember.firstUsername());
+                .replace("{alias}", merchantMember.firstAlias().getValue());
         Spark.get("/script.js", (req, res) -> script);
         String page = Resources.toString(Resources.getResource("index.html"), UTF_8);
         Spark.get("/", (req, res) -> page);
@@ -133,7 +136,11 @@ public class Application {
         // If we try to create a member with an already-used name,
         // it will fail.
         String username = "merchant-sample-" + generateNonce();
-        return tokenIO.createMember(username);
+        Alias alias = Alias.newBuilder()
+                .setType(USERNAME)
+                .setValue(username)
+                .build();
+        return tokenIO.createMember(alias);
         // The newly-created member is automatically logged in.
     }
 
