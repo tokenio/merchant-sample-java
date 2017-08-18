@@ -37,8 +37,7 @@ Token.bindPayButton(
     function(data) {     // Success callback
         $.post(
             'http://localhost:3000/transfer',
-            data,
-            function () {});
+            data);
     },
     function(error) {    // Failure callback
         console.log('Something\'s wrong!', error);
