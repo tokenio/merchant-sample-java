@@ -2,17 +2,21 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
+import static io.token.TokenIO.TokenCluster.DEVELOPMENT;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.USERNAME;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
 import io.grpc.StatusRuntimeException;
+import io.token.Destinations;
 import io.token.Member;
 import io.token.TokenIO;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
+import io.token.proto.common.transferinstructions.TransferInstructionsProtos;
+import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferEndpoint;
 import io.token.security.UnsecuredFileSystemKeyStore;
 
 import java.io.File;
@@ -65,8 +69,13 @@ public class Application {
             // and check its validity
             Token token = merchantMember.getToken(tokenId);
 
+            // Transfer destinations. If your bank supports
+            // Token payments, you can use your Token member
+            // and account ID instead or in addition.
+            TransferEndpoint dest = Destinations.sepa("DK5000440441116263");
+
             // Redeem the token at the server, to move the funds
-            Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example");
+            Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example", dest);
             return "";
         });
         // (If user closes browser before this function is called, we don't redeem the token.
