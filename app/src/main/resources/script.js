@@ -13,8 +13,10 @@ function shippingCb(address, tokenCallback) {
 }
 
 // Initializes the Quick Checkout Button
-Token.bindPayButton(
-    'tokenPayBtn',                  // ID of <button>
+Token.styleButton({            // Sets up the Quick Checkout button
+    id: "tokenPayBtn",
+    label: "Token Quick Checkout"
+}).bindPayButton(
     {                               // Terms
         alias: {                    // Merchant alias
             type: 'USERNAME',
@@ -22,16 +24,7 @@ Token.bindPayButton(
         },
         amount: 4.99,               // Amount
         currency: 'EUR',            // Currency
-        destinations: [{
-            // Transfer destinations. If your bank supports
-            // Token payments, you can use your Token member
-            // and account ID instead or in addition.
-            account: {
-                sepa: {
-                    iban: 'DK5000440441116263'
-                }
-            }
-        }],
+        destinations: []
     },
     shippingCb,          // Shipping callback
     function(data) {     // Success callback
