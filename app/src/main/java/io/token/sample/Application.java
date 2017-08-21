@@ -2,7 +2,6 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenIO.TokenCluster.DEVELOPMENT;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.USERNAME;
 import static io.token.util.Util.generateNonce;
