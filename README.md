@@ -3,8 +3,7 @@
 This sample code shows how to enable the Token Merchant Checkout
 experience on a simple web server.
 You can learn more about the Quick Checkout flow and relevant APIs at the
-[Merchant Quick Checkout](http://developer-beta.token.io/merchant-checkout/)
-documentation.
+[Merchant Quick Checkout documentation](https://developer-beta.token.io/merchant-checkout/).
 
 To build this code, you need Java Development Kit (JDK) version 8 or later.
 
@@ -25,5 +24,6 @@ The server shows a web page at `localhost:3000`. The page has a checkout button.
 Clicking the button starts the Token merchant payment flow.
 The server handles endorsed payments by redeeming tokens.
 
-Test by going to `localhost:3000` and paying with the "Token PSD2" app,
-installed from the App Store.
+Test by going to `localhost:3000`.
+You can't get far until you create a customer member as described at the
+[Merchant Quick Checkout documentation](https://developer-beta.token.io/merchant-checkout/).
