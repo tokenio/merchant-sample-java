@@ -26,7 +26,7 @@ Token.styleButton({            // Sets up the Quick Checkout button
         currency: 'EUR',            // Currency
         destinations: []
     },
-    shippingCb,          // Shipping callback
+    shippingCb,          // Shipping callback (null for "virtual" goods)
     function(data) {     // Success callback
         $.post(
             'http://localhost:3000/transfer',
