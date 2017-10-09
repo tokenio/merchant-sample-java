@@ -3,7 +3,7 @@ package io.token.sample;
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
-import static io.token.proto.common.alias.AliasProtos.Alias.Type.USERNAME;
+import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
@@ -14,7 +14,6 @@ import io.token.TokenIO;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
-import io.token.proto.common.transferinstructions.TransferInstructionsProtos;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferEndpoint;
 import io.token.security.UnsecuredFileSystemKeyStore;
 
@@ -136,16 +135,16 @@ public class Application {
      * This has the side effect of storing the new Member's private
      * keys in the ./keys directory.
      *
-     * @param tokenIO
-     * @return
+     * @param tokenIO Token SDK client
+     * @return newly-created member
      */
     private static Member createMember(TokenIO tokenIO) {
         // Generate a random username.
         // If we try to create a member with an already-used name,
         // it will fail.
-        String username = "merchant-sample-" + generateNonce();
+        String username = "merchant-sample-" + generateNonce().toLowerCase() + "@example.com";
         Alias alias = Alias.newBuilder()
-                .setType(USERNAME)
+                .setType(EMAIL)
                 .setValue(username)
                 .build();
         return tokenIO.createMember(alias);

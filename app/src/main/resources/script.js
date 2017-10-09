@@ -19,7 +19,7 @@ Token.styleButton({            // Sets up the Quick Checkout button
 }).bindPayButton(
     {                               // Terms
         alias: {                    // Merchant alias
-            type: 'USERNAME',
+            type: 'EMAIL',
             value: '{alias}'        // (filled in by server)
         },
         amount: 4.99,               // Amount
