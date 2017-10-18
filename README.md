@@ -27,3 +27,9 @@ The server handles endorsed payments by redeeming tokens.
 Test by going to `localhost:3000`.
 You can't get far until you create a customer member as described at the
 [Merchant Quick Checkout documentation](https://developer.token.io/merchant-checkout/).
+
+This code uses a publicly-known developer key (the devKey line in the
+initializeSDK method). This normally works, but don't be surprised if
+it's sometimes rate-limited or disabled. If your organization will do
+more Token development and doesn't already have a developer key, contact
+Token to get one.
