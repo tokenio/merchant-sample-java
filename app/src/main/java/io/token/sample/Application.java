@@ -143,7 +143,7 @@ public class Application {
         // Generate a random username.
         // If we try to create a member with an already-used name,
         // it will fail.
-        String username = "merchant-sample-" + generateNonce().toLowerCase() + "@example.com";
+        String email = "merchant-sample-" + generateNonce().toLowerCase() + "+noverify@example.com";
         Alias alias = Alias.newBuilder()
                 .setType(EMAIL)
                 .setValue(username)
