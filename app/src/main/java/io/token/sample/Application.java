@@ -146,7 +146,7 @@ public class Application {
         String email = "merchant-sample-" + generateNonce().toLowerCase() + "+noverify@example.com";
         Alias alias = Alias.newBuilder()
                 .setType(EMAIL)
-                .setValue(username)
+                .setValue(email)
                 .build();
         return tokenIO.createMember(alias);
         // The newly-created member is automatically logged in.
