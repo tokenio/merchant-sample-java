@@ -70,7 +70,9 @@ public class Application {
             // Transfer destinations. If your bank supports
             // Token payments, you can use your Token member
             // and account ID instead or in addition.
-            TransferEndpoint dest = Destinations.sepa("DK5000440441116263");
+            TransferEndpoint dest = Destinations.sepa(
+                    "IRONUSCA000",
+                    "DK5000440441116263");
 
             // Redeem the token at the server, to move the funds
             Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example", dest);
