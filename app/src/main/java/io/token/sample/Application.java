@@ -111,15 +111,15 @@ public class Application {
 
     /**
      * Using a TokenIO SDK client and the member ID of a previously-created
-     * Member (whose private keys we have stored locally), log in as that member.
+     * Member (whose private keys we have stored locally).
      *
      * @param tokenIO SDK
      * @param memberId ID of member
      * @return Logged-in member.
      */
-    private static Member loginMember(TokenIO tokenIO, String memberId) {
+    private static Member loadMember(TokenIO tokenIO, String memberId) {
         try {
-            return tokenIO.login(memberId);
+            return tokenIO.getMember(memberId);
         } catch (StatusRuntimeException sre) {
             if (sre.getStatus().getCode() == NOT_FOUND) {
                 // We think we have a member's ID and keys, but we can't log in.
@@ -173,7 +173,7 @@ public class Application {
                 .filter(p -> p.contains("_")) // find dir names containing "_"
                 .map(p -> p.replace("_", ":")) // member ID
                 .findFirst()
-                .map(memberId -> loginMember(tokenIO, memberId))
+                .map(memberId -> loadMember(tokenIO, memberId))
                 .orElse(createMember(tokenIO));
     }
 
