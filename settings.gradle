@@ -1,2 +1,2 @@
 include 'app'
-rootProject.name='token-java-sample'
+rootProject.name='token-merchant-sample'
