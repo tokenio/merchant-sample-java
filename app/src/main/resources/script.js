@@ -24,7 +24,7 @@ Token.styleButton({            // Sets up the Quick Checkout button
         },
         amount: 4.99,               // Amount
         currency: 'EUR',            // Currency
-        destinations: []
+	destinations: [{account: {sepa: { iban: "DE16700222000072880129"}}}]
     },
     shippingCb,          // Shipping callback (null for "virtual" goods)
     function(data) {     // Success callback

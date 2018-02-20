@@ -67,15 +67,8 @@ public class Application {
             // and check its validity
             Token token = merchantMember.getToken(tokenId);
 
-            // Transfer destinations. If your bank supports
-            // Token payments, you can use your Token member
-            // and account ID instead or in addition.
-            TransferEndpoint dest = Destinations.sepa(
-                    "IRONUSCA000",
-                    "DK5000440441116263");
-
             // Redeem the token at the server, to move the funds
-            Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example", dest);
+            Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example");
             return "";
         });
         // (If user closes browser before this function is called, we don't redeem the token.
