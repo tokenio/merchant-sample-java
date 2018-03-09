@@ -23,10 +23,9 @@ lets you try out UI and payment flows without moving real money.
 The server shows a web page at `localhost:3000`. The page has a checkout button.
 Clicking the button starts the Token merchant payment flow.
 The server handles endorsed payments by redeeming tokens.
-
-Test by going to `localhost:3000`.
-You can't get far until you create a customer member as described at the
-[Merchant Quick Checkout documentation](https://developer.token.io/merchant-checkout/).
+See the
+[Merchant Quick Checkout documentation](https://developer.token.io/merchant-checkout/)
+for the flow, including how to choose a test bank account in the test environment.
 
 This code uses a publicly-known developer key (the devKey line in the
 initializeSDK method). This normally works, but don't be surprised if
