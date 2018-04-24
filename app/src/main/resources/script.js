@@ -1,38 +1,26 @@
-function shippingCb(address, tokenCallback) {
-    tokenCallback({ // Can return price based on address
-        shippingMethods: [
-            {
-                id: '0',
-                name: 'Standard Ground (5-9 business days)',
-                deliveryTime: '5 - 9 Business Days',
-                cost: 0
-            },
-        ],
-        tax: 0
-    });
+function initiatePayment() {
+    var XHR = new XMLHttpRequest();
+
+    // Set up our request
+    XHR.open('POST', 'http://localhost:3000/transfer', true);
+
+    XHR.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+
+    var data = $.param({
+        merchantId: 'Merchant 123',
+        amount: 4.99,
+        currency: 'EUR',
+        description: 'Book Purchase',
+        destination: 'DE16700222000072880129'
+     });
+
+     // Define what happens on successful data submission
+     XHR.addEventListener("load", function(event) {
+       window.location.replace(event.target.responseURL);
+     });
+
+    // Send the data; HTTP headers are set automatically
+    XHR.send(data);
 }
 
-// Initializes the Quick Checkout Button
-Token.styleButton({            // Sets up the Quick Checkout button
-    id: "tokenPayBtn",
-    label: "Token Quick Checkout"
-}).bindPayButton(
-    {                               // Terms
-        alias: {                    // Merchant alias
-            type: 'EMAIL',
-            value: '{alias}'        // (filled in by server)
-        },
-        amount: 4.99,               // Amount
-        currency: 'EUR',            // Currency
-	destinations: [{account: {sepa: { iban: "DE16700222000072880129"}}}]
-    },
-    shippingCb,          // Shipping callback (null for "virtual" goods)
-    function(data) {     // Success callback
-        $.post(
-            'http://localhost:3000/transfer',
-            data);
-    },
-    function(error) {    // Failure callback
-        console.log('Something\'s wrong!', error);
-    }
-);
+document.getElementById("tokenPayBtn").onclick = initiatePayment;

@@ -3,14 +3,18 @@ package io.token.sample;
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
-import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
+import static io.token.TokenRequest.TokenRequestOptions.REDIRECT_URL;
+import static io.token.proto.common.alias.AliasProtos.Alias.Type.DOMAIN;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
 import io.grpc.StatusRuntimeException;
-import io.token.Destinations;
 import io.token.Member;
 import io.token.TokenIO;
+import io.token.TokenRequest;
+import io.token.TransferTokenBuilder;
+import io.token.proto.common.account.AccountProtos.BankAccount;
+import io.token.proto.common.account.AccountProtos.BankAccount.Sepa;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
@@ -27,6 +31,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 
 import spark.Spark;
 
@@ -58,22 +63,50 @@ public class Application {
         // Initializes the server
         Spark.port(3000);
 
-        // Endpoint for transfer payment, called by client side after user approves payment.
+        // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.post("/transfer", (req, res) -> {
             Map<String, String> formData = parseFormData(req.body());
-            String tokenId = formData.get("tokenId");
 
-            // Make sure to get the token first,
-            // and check its validity
+            TransferEndpoint destination = TransferEndpoint.newBuilder()
+                    .setAccount(BankAccount.newBuilder()
+                            .setSepa(Sepa.newBuilder()
+                                    .setIban(formData.get("destination"))))
+                    .build();
+            //create TokenRequest
+            TransferTokenBuilder tokenBuilder =
+                    new TransferTokenBuilder(
+                            Double.parseDouble(formData.get("amount")),
+                            formData.get("currency"))
+                            .setDescription(formData.get("description"))
+                            .addDestination(destination)
+                            .setToAlias(merchantMember.firstAlias())
+                            .setToMemberId(merchantMember.memberId());
+
+            TokenRequest request = TokenRequest.create(tokenBuilder)
+                    .setOption(REDIRECT_URL, "http://localhost:3000/redeem");
+
+            String requestId = merchantMember.storeTokenRequest(request);
+
+            //generate Token Request URL to redirect to
+            String tokenRequestUrl = tokenIO.generateTokenRequestUrl(requestId);
+            //send a 303 Redirect
+            res.status(302);
+            res.redirect(tokenRequestUrl);
+            return null;
+        });
+
+        Spark.get("/redeem", (req, res) -> {
+            String callbackUri = req.raw().getRequestURL().toString()
+                    + "?"
+                    + req.raw().getQueryString();
+            String tokenId = tokenIO.parseTokenRequestCallbackUrl(callbackUri).getTokenId();
+            //get the token and check its validity
             Token token = merchantMember.getToken(tokenId);
 
-            // Redeem the token at the server, to move the funds
-            Transfer transfer = merchantMember.redeemToken(token, 4.99, "EUR", "example");
-            return "";
+            //redeem the token at the server to move the funds
+            Transfer transfer = merchantMember.redeemToken(token);
+            return null;
         });
-        // (If user closes browser before this function is called, we don't redeem the token.
-        //  Since this function is where we get the shipping information, we probably don't
-        //  want to redeem the token: we wouldn't know where to ship the goods.)
 
         // Serve the web page and JS script:
         String script = Resources.toString(Resources.getResource("script.js"), UTF_8)
@@ -138,10 +171,10 @@ public class Application {
         // Generate a random username.
         // If we try to create a member with an already-used name,
         // it will fail.
-        String email = "merchant-sample-" + generateNonce().toLowerCase() + "+noverify@example.com";
+        String domain = "merchant-sample-" + generateNonce().toLowerCase() + ".com";
         Alias alias = Alias.newBuilder()
-                .setType(EMAIL)
-                .setValue(email)
+                .setType(DOMAIN)
+                .setValue(domain)
                 .build();
         return tokenIO.createMember(alias);
         // The newly-created member is automatically logged in.
