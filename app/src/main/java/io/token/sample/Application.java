@@ -109,10 +109,15 @@ public class Application {
             return "Success! Redeemed transfer " + transfer.getId();
         });
 
-        // Serve the web page and JS script:
+        // Serve the web page, stylesheet and JS script:
         String script = Resources.toString(Resources.getResource("script.js"), UTF_8)
                 .replace("{alias}", merchantMember.firstAlias().getValue());
         Spark.get("/script.js", (req, res) -> script);
+        String style = Resources.toString(Resources.getResource("style.css"), UTF_8);
+        Spark.get("/style.css", (req, res) -> {
+            res.type("text/css");
+            return style;
+        });
         String page = Resources.toString(Resources.getResource("index.html"), UTF_8);
         Spark.get("/", (req, res) -> page);
     }

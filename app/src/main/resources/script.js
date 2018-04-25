@@ -1,4 +1,7 @@
 function initiatePayment() {
+    // prevent multiple clicking
+    unbindClick();
+
     var XHR = new XMLHttpRequest();
 
     // Set up our request
@@ -16,11 +19,22 @@ function initiatePayment() {
 
      // Define what happens on successful data submission
      XHR.addEventListener("load", function(event) {
-       window.location.replace(event.target.responseURL);
+       window.location.assign(event.target.responseURL);
      });
 
     // Send the data; HTTP headers are set automatically
     XHR.send(data);
 }
 
-document.getElementById("tokenPayBtn").onclick = initiatePayment;
+function bindClick() {
+    // Add click listener
+    el.addEventListener('click', initiatePayment);
+}
+
+function unbindClick() {
+    // Remove click listener
+    el.removeEventListener('click', initiatePayment);
+}
+
+var el = document.getElementById("tokenPayBtn");
+bindClick();
