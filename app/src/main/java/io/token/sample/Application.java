@@ -89,7 +89,7 @@ public class Application {
 
             //generate Token Request URL to redirect to
             String tokenRequestUrl = tokenIO.generateTokenRequestUrl(requestId);
-            //send a 303 Redirect
+            //send a 302 Redirect
             res.status(302);
             res.redirect(tokenRequestUrl);
             return null;
