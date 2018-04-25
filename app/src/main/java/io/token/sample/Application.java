@@ -105,7 +105,8 @@ public class Application {
 
             //redeem the token at the server to move the funds
             Transfer transfer = merchantMember.redeemToken(token);
-            return null;
+            res.status(200);
+            return "Success! Redeemed transfer " + transfer.getId();
         });
 
         // Serve the web page and JS script:
