@@ -14,7 +14,7 @@ function initiatePayment() {
         amount: 4.99,
         currency: 'EUR',
         description: 'Book Purchase',
-        destination: 'DE16700222000072880129'
+        destination: '{"fasterPayments":{"accountNumber":"12345678","sortCode":"123456"}}'
      });
 
      // Define what happens on successful data submission

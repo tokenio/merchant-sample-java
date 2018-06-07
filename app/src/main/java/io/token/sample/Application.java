@@ -13,8 +13,8 @@ import io.token.Member;
 import io.token.TokenIO;
 import io.token.TokenRequest;
 import io.token.TransferTokenBuilder;
+import io.token.proto.ProtoJson;
 import io.token.proto.common.account.AccountProtos.BankAccount;
-import io.token.proto.common.account.AccountProtos.BankAccount.Sepa;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
@@ -31,7 +31,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 
 import spark.Spark;
 
@@ -67,18 +66,19 @@ public class Application {
         Spark.post("/transfer", (req, res) -> {
             Map<String, String> formData = parseFormData(req.body());
 
-            TransferEndpoint destination = TransferEndpoint.newBuilder()
-                    .setAccount(BankAccount.newBuilder()
-                            .setSepa(Sepa.newBuilder()
-                                    .setIban(formData.get("destination"))))
-                    .build();
+            BankAccount destination = ProtoJson.fromJson(
+                    formData.get("destination"),
+                    BankAccount.newBuilder());
+
             //create TokenRequest
             TransferTokenBuilder tokenBuilder =
                     new TransferTokenBuilder(
                             Double.parseDouble(formData.get("amount")),
                             formData.get("currency"))
                             .setDescription(formData.get("description"))
-                            .addDestination(destination)
+                            .addDestination(TransferEndpoint.newBuilder()
+                                    .setAccount(destination)
+                                    .build())
                             .setToAlias(merchantMember.firstAlias())
                             .setToMemberId(merchantMember.memberId());
 
