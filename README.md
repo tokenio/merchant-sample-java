@@ -33,3 +33,7 @@ initializeSDK method). This normally works, but don't be surprised if
 it's sometimes rate-limited or disabled. If your organization will do
 more Token development and doesn't already have a developer key, contact
 Token to get one.
+
+### Troubleshooting
+
+If anything goes wrong, try to clear your browser's cache before retest.
