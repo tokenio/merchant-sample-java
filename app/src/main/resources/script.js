@@ -12,7 +12,7 @@ function initiatePayment() {
     var data = $.param({
         merchantId: 'Merchant 123',
         amount: 4.99,
-        currency: 'EUR',
+        currency: 'GBP',
         description: 'Book Purchase',
         destination: '{"fasterPayments":{"accountNumber":"12345678","sortCode":"123456"}}'
      });
