@@ -12,9 +12,9 @@ function initiatePayment() {
     var data = $.param({
         merchantId: 'Merchant 123',
         amount: 4.99,
-        currency: 'GBP',
+        currency: 'EUR',
         description: 'Book Purchase',
-        destination: '{"fasterPayments":{"accountNumber":"12345678","sortCode":"123456"}}'
+        destination: '{"sepa":{"iban":"DE16700222000072880129"}}'
      });
 
      // Define what happens on successful data submission
