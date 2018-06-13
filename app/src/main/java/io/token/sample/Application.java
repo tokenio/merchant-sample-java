@@ -96,10 +96,7 @@ public class Application {
         });
 
         Spark.get("/redeem", (req, res) -> {
-            String callbackUri = req.raw().getRequestURL().toString()
-                    + "?"
-                    + req.raw().getQueryString();
-            String tokenId = tokenIO.parseTokenRequestCallbackUrl(callbackUri).getTokenId();
+            String tokenId = req.queryMap("tokenId").value();
             //get the token and check its validity
             Token token = merchantMember.getToken(tokenId);
 

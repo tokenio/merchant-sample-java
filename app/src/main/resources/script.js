@@ -1,7 +1,16 @@
-function initiatePayment() {
-    // prevent multiple clicking
-    unbindClick();
+"use strict";
 
+var elementId = "tokenPayBtn";
+
+function createButton() {
+    // Create button
+    window.Token.styleButton({
+        id: elementId,
+        label: "Token Quick Checkout",
+    }, bindButton); // execute bindButton when styling button is finished
+}
+
+function bindButton(button) {
     var XHR = new XMLHttpRequest();
 
     // Set up our request
@@ -19,22 +28,24 @@ function initiatePayment() {
 
      // Define what happens on successful data submission
      XHR.addEventListener("load", function(event) {
-       window.location.assign(event.target.responseURL);
+       button.bindPayButton(
+            event.target.responseURL, // request token URL
+            null, // shipping callback (deprecated)
+            function(data) {
+                // build success URL
+                var successURL = "/redeem"
+                    + "?tokenId=" + window.encodeURIComponent(data.tokenId);
+                // navigate to success URL
+                window.location.assign(successURL);
+            },
+            function(error) { // fail callback
+                throw error;
+            }
+       );
      });
 
     // Send the data; HTTP headers are set automatically
     XHR.send(data);
 }
 
-function bindClick() {
-    // Add click listener
-    el.addEventListener('click', initiatePayment);
-}
-
-function unbindClick() {
-    // Remove click listener
-    el.removeEventListener('click', initiatePayment);
-}
-
-var el = document.getElementById("tokenPayBtn");
-bindClick();
+createButton();
