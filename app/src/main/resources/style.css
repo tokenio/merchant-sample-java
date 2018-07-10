@@ -2,3 +2,7 @@
     width: 230px;
     margin-top: 10px;
 }
+
+.buttonTypeSelector label {
+    margin-right: 10px;
+}
