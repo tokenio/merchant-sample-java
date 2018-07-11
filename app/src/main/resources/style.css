@@ -1,23 +1,8 @@
 #tokenPayBtn {
-    border: 0;
-    font-family: sans-serif;
-    -ms-flex-line-pack: stretch;
-        align-content: stretch;
-    -webkit-box-align: stretch;
-        -ms-flex-align: stretch;
-            align-items: stretch;
-    background-color: #05A5F0;
-    border-radius: 0;
-    box-sizing: border-box;
-    color: #ffffff;
-    cursor: pointer;
-    display: inline;
-    font-size: 14px;
-    font-weight: 700;
-    height: 45px;
-    outline: none;
-    padding: 0;
-    text-decoration: none;
     width: 230px;
     margin-top: 10px;
+}
+
+.buttonTypeSelector label {
+    margin-right: 10px;
 }
