@@ -6,13 +6,13 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'net.ltgt.gradle:gradle-apt-plugin:0.8'
+        classpath 'net.ltgt.gradle:gradle-apt-plugin:0.9'
     }
 }
 
 allprojects {
     group = 'io.token.sample'
-    version = '1.0.2'
+    version = '1.1.0'
 
     project.apply plugin: 'java'
     project.apply plugin: 'idea'
@@ -20,7 +20,7 @@ allprojects {
     ext {
         ver = [
                 sparkjava: '2.6.0',
-                tokenSdk: '1.0.123',
+                tokenSdk: '1.1.0',
         ]
     }
 
