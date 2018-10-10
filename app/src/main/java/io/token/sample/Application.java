@@ -4,7 +4,7 @@ import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenIO.TokenCluster.SANDBOX;
 import static io.token.TokenRequest.TokenRequestOptions.REDIRECT_URL;
-import static io.token.proto.common.alias.AliasProtos.Alias.Type.DOMAIN;
+import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
@@ -174,10 +174,12 @@ public class Application {
         // Generate a random username.
         // If we try to create a member with an already-used name,
         // it will fail.
-        String domain = "merchant-sample-" + generateNonce().toLowerCase() + ".com";
+        // If a domain alias is used instead of an email, please contact Token
+        // with the domain and member ID for verification.
+        String email = "merchant-sample-" + generateNonce().toLowerCase() + "+noverify@example.com";
         Alias alias = Alias.newBuilder()
-                .setType(DOMAIN)
-                .setValue(domain)
+                .setType(EMAIL)
+                .setValue(email)
                 .build();
         return tokenIO.createMember(alias);
         // The newly-created member is automatically logged in.
