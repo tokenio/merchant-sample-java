@@ -181,7 +181,7 @@ public class Application {
                 .setType(EMAIL)
                 .setValue(email)
                 .build();
-        return tokenIO.createMember(alias);
+        return tokenIO.createBusinessMember(alias);
         // The newly-created member is automatically logged in.
     }
 
