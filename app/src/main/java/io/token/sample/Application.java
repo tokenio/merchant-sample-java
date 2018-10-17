@@ -176,6 +176,7 @@ public class Application {
         // it will fail.
         // If a domain alias is used instead of an email, please contact Token
         // with the domain and member ID for verification.
+        // See https://developer.token.io/sdk/#aliases for more information.
         String email = "merchant-sample-" + generateNonce().toLowerCase() + "+noverify@example.com";
         Alias alias = Alias.newBuilder()
                 .setType(EMAIL)
