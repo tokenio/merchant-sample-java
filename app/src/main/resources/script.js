@@ -47,14 +47,17 @@ function createPopupButton() {
     // clean up instances
     clean();
 
+    var Token = new window.Token({
+        env: 'sandbox',
+    });
     // create TokenPopupController to handle Popup messages
-    tokenController = window.Token.createPopupController();
+    tokenController = Token.createPopupController();
 
     // get button placeholder element
     var element = document.getElementById(elementId);
 
     // create the button
-    button = window.Token.createTokenButton(element, {
+    button = Token.createTokenButton(element, {
         label: "Popup Token Quick Checkout",
     });
 
@@ -98,9 +101,9 @@ function getTokenRequestUrl(done) {
     var data = $.param({
         merchantId: 'Merchant 123',
         amount: 4.99,
-        currency: 'EUR',
+        currency: 'GBP',
         description: 'Book Purchase',
-        destination: '{"sepa":{"iban":"DE16700222000072880129"}}'
+        destination: '{"fasterPayments":{"sortCode":"123456","accountNumber":"12345678"}}'
      });
 
      // Define what happens on successful data submission
