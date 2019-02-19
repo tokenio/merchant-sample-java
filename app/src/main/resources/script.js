@@ -110,7 +110,7 @@ function getTokenRequestUrl(done) {
      XHR.addEventListener("load", function(event) {
          // execute callback once response is received
          if (event.target.status === 200) {
-             done(event.target.responseURL);
+             done(event.target.responseText);
          }
      });
 

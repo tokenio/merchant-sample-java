@@ -89,10 +89,11 @@ public class Application {
 
             //generate Token Request URL to redirect to
             String tokenRequestUrl = tokenIO.generateTokenRequestUrl(requestId);
-            //send a 302 Redirect
-            res.status(302);
-            res.redirect(tokenRequestUrl);
-            return null;
+
+            //send a 200 with tokenRequestUrl body
+            res.status(200);
+            res.type("text/plain");
+            return tokenRequestUrl;
         });
 
         Spark.get("/redeem", (req, res) -> {
