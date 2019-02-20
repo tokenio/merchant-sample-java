@@ -79,6 +79,7 @@ public class Application {
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
                     .setRedirectUrl("http://localhost:3000/redeem")
+                    .setCallbackState(generateNonce())
                     .build();
 
             String requestId = merchantMember.storeTokenRequestBlocking(request);
