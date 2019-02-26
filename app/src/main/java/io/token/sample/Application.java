@@ -18,6 +18,7 @@ import io.token.security.UnsecuredFileSystemKeyStore;
 import io.token.tokenrequest.TokenRequest;
 import io.token.tpp.Member;
 import io.token.tpp.TokenClient;
+import io.token.tpp.tokenrequest.TokenRequestCallback;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import spark.Spark;
 
@@ -42,6 +44,8 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
+    private static final String CSRF_TOKEN = generateNonce();
+
     /**
      * Main function.
      *
@@ -79,7 +83,7 @@ public class Application {
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
                     .setRedirectUrl("http://localhost:3000/redeem")
-                    .setCallbackState(generateNonce())
+                    .setCsrfToken(CSRF_TOKEN)
                     .build();
 
             String requestId = merchantMember.storeTokenRequestBlocking(request);
@@ -93,9 +97,17 @@ public class Application {
         });
 
         Spark.get("/redeem", (req, res) -> {
-            String tokenId = req.queryMap("tokenId").value();
+            Map<String, String> queryParams = req.queryParams()
+                    .stream()
+                    .collect(Collectors.toMap(k -> k, k -> req.queryParams(k)));
+
+            // check CSRF token and retrieve state and token ID from callback parameters
+            TokenRequestCallback callback = tokenClient.processTokenRequestCallbackBlocking(
+                    queryParams,
+                    CSRF_TOKEN);
+
             //get the token and check its validity
-            Token token = merchantMember.getTokenBlocking(tokenId);
+            Token token = merchantMember.getTokenBlocking(callback.getTokenId());
 
             //redeem the token at the server to move the funds
             Transfer transfer = merchantMember.redeemTokenBlocking(token);
