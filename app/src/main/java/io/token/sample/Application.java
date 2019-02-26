@@ -102,7 +102,7 @@ public class Application {
                     .collect(Collectors.toMap(k -> k, k -> req.queryParams(k)));
 
             // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.processTokenRequestCallbackBlocking(
+            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
                     queryParams,
                     CSRF_TOKEN);
 
