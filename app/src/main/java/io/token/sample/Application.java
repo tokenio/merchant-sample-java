@@ -44,7 +44,7 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
-    private static final String CSRF_TOKEN = generateNonce();
+    private static final String CSRF_TOKEN_KEY = "csrf_token";
 
     /**
      * Main function.
@@ -74,6 +74,12 @@ public class Application {
                     formData.get("destination"),
                     BankAccount.newBuilder());
 
+            // generate CSRF token
+            String csrfToken = generateNonce();
+
+            // set CSRF token in browser cookie
+            res.cookie(CSRF_TOKEN_KEY, csrfToken);
+
             // create the token request
             TokenRequest request = TokenRequest.transferTokenRequestBuilder(amount, currency)
                     .setDescription(formData.get("description"))
@@ -83,7 +89,7 @@ public class Application {
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
                     .setRedirectUrl("http://localhost:3000/redeem")
-                    .setCsrfToken(CSRF_TOKEN)
+                    .setCsrfToken(csrfToken)
                     .build();
 
             String requestId = merchantMember.storeTokenRequestBlocking(request);
@@ -101,10 +107,13 @@ public class Application {
                     .stream()
                     .collect(Collectors.toMap(k -> k, k -> req.queryParams(k)));
 
+            // retrieve CSRF token from browser cookie
+            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
+
             // check CSRF token and retrieve state and token ID from callback parameters
             TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
                     queryParams,
-                    CSRF_TOKEN);
+                    csrfToken);
 
             //get the token and check its validity
             Token token = merchantMember.getTokenBlocking(callback.getTokenId());
