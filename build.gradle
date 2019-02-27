@@ -20,7 +20,7 @@ allprojects {
     ext {
         ver = [
                 sparkjava: '2.6.0',
-                tokenSdk: '2.0.0-beta-6',
+                tokenSdk: '2.0.0-beta-9',
         ]
     }
 
