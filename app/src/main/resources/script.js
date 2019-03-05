@@ -4,11 +4,6 @@ var elementId = "tokenPayBtn";
 var tokenController;
 var button;
 
-// Client side Token object for creating the Token button, handling the popup, etc
-var Token = new window.Token({
-    env: 'sandbox',
-});
-
 function clean() {
     if (button) {
         button.destroy();
@@ -26,13 +21,13 @@ function createRedirectButton() {
     clean();
 
     // create TokenPopupController to handle Popup messages
-    tokenController = Token.createRedirectController();
+    tokenController = window.Token.createRedirectController();
 
     // get button placeholder element
     var element = document.getElementById(elementId);
 
     // create the button
-    button = Token.createTokenButton(element, {
+    button = window.Token.createTokenButton(element, {
         label: "Redirect Token Quick Checkout",
     });
 
@@ -52,6 +47,9 @@ function createPopupButton() {
     // clean up instances
     clean();
 
+    var Token = new window.Token({
+        env: 'sandbox',
+    });
     // create TokenPopupController to handle Popup messages
     tokenController = Token.createPopupController();
 
@@ -81,9 +79,7 @@ function createPopupButton() {
     tokenController.onSuccess(function(data) { // Success Callback
         // build success URL
         var successURL = "/redeem"
-            + "?signature=" + window.encodeURIComponent(data.signature)
-            + "&state=" + window.encodeURIComponent(data.state)
-            + "&tokenId=" + window.encodeURIComponent(data.tokenId);
+            + "?tokenId=" + window.encodeURIComponent(data.tokenId);
         // navigate to success URL
         window.location.assign(successURL);
     });

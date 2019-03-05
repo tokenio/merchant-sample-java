@@ -12,7 +12,6 @@ import io.grpc.StatusRuntimeException;
 import io.token.Member;
 import io.token.TokenIO;
 import io.token.TokenRequest;
-import io.token.TokenRequestCallback;
 import io.token.TransferTokenBuilder;
 import io.token.proto.ProtoJson;
 import io.token.proto.common.account.AccountProtos.BankAccount;
@@ -67,10 +66,6 @@ public class Application {
         Spark.post("/transfer", (req, res) -> {
             Map<String, String> formData = parseFormData(req.body());
 
-            // Generate Nonce and store it in cookie session
-            String nonce = generateNonce();
-            res.cookie("session.nonce", nonce, 24 * 60 * 60 * 1000); // 24h
-
             BankAccount destination = ProtoJson.fromJson(
                     formData.get("destination"),
                     BankAccount.newBuilder());
@@ -93,8 +88,7 @@ public class Application {
             String requestId = merchantMember.storeTokenRequest(request);
 
             //generate Token Request URL to redirect to
-            String tokenRequestUrl =
-                tokenIO.generateTokenRequestUrl(requestId, "", nonce);
+            String tokenRequestUrl = tokenIO.generateTokenRequestUrl(requestId);
 
             //send a 200 with tokenRequestUrl body
             res.status(200);
@@ -103,15 +97,7 @@ public class Application {
         });
 
         Spark.get("/redeem", (req, res) -> {
-            // Get Nonce from cookie session
-            String nonce = req.cookie("session.nonce");
-
-            String callbackUrl = req.scheme() + "://" + req.host() + req.uri() + "?" + req.raw().getQueryString();
-
-            TokenRequestCallback callback = tokenIO.parseTokenRequestCallbackUrl(callbackUrl, nonce);
-
-            String tokenId = callback.getTokenId();
-
+            String tokenId = req.queryMap("tokenId").value();
             //get the token and check its validity
             Token token = merchantMember.getToken(tokenId);
 
