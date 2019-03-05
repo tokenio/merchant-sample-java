@@ -2,17 +2,12 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenIO.TokenCluster.SANDBOX;
-import static io.token.TokenRequest.TokenRequestOptions.REDIRECT_URL;
+import static io.token.TokenClient.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
 import io.grpc.StatusRuntimeException;
-import io.token.Member;
-import io.token.TokenIO;
-import io.token.TokenRequest;
-import io.token.TransferTokenBuilder;
 import io.token.proto.ProtoJson;
 import io.token.proto.common.account.AccountProtos.BankAccount;
 import io.token.proto.common.alias.AliasProtos.Alias;
@@ -20,6 +15,10 @@ import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferEndpoint;
 import io.token.security.UnsecuredFileSystemKeyStore;
+import io.token.tokenrequest.TokenRequest;
+import io.token.tpp.Member;
+import io.token.tpp.TokenClient;
+import io.token.tpp.tokenrequest.TokenRequestCallback;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import spark.Spark;
 
@@ -44,6 +44,8 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
+    private static final String CSRF_TOKEN_KEY = "csrf_token";
+
     /**
      * Main function.
      *
@@ -52,12 +54,12 @@ public class Application {
      */
     public static void main(String[] args) throws IOException {
         // Connect to Token's development sandbox
-        TokenIO tokenIO = initializeSDK();
+        TokenClient tokenClient = initializeSDK();
 
         // If we're running the first time, create a new member (Token user account)
         // for this test merchant.
         // If we're running again, log in the previously-created member.
-        Member merchantMember = initializeMember(tokenIO);
+        Member merchantMember = initializeMember(tokenClient);
 
         // Initializes the server
         Spark.port(3000);
@@ -66,29 +68,34 @@ public class Application {
         Spark.post("/transfer", (req, res) -> {
             Map<String, String> formData = parseFormData(req.body());
 
+            double amount = Double.parseDouble(formData.get("amount"));
+            String currency = formData.get("currency");
             BankAccount destination = ProtoJson.fromJson(
                     formData.get("destination"),
                     BankAccount.newBuilder());
 
-            //create TokenRequest
-            TransferTokenBuilder tokenBuilder =
-                    new TransferTokenBuilder(
-                            Double.parseDouble(formData.get("amount")),
-                            formData.get("currency"))
-                            .setDescription(formData.get("description"))
-                            .addDestination(TransferEndpoint.newBuilder()
-                                    .setAccount(destination)
-                                    .build())
-                            .setToAlias(merchantMember.firstAlias())
-                            .setToMemberId(merchantMember.memberId());
+            // generate CSRF token
+            String csrfToken = generateNonce();
 
-            TokenRequest request = TokenRequest.create(tokenBuilder)
-                    .setOption(REDIRECT_URL, "http://localhost:3000/redeem");
+            // set CSRF token in browser cookie
+            res.cookie(CSRF_TOKEN_KEY, csrfToken);
 
-            String requestId = merchantMember.storeTokenRequest(request);
+            // create the token request
+            TokenRequest request = TokenRequest.transferTokenRequestBuilder(amount, currency)
+                    .setDescription(formData.get("description"))
+                    .addDestination(TransferEndpoint.newBuilder()
+                            .setAccount(destination)
+                            .build())
+                    .setToAlias(merchantMember.firstAliasBlocking())
+                    .setToMemberId(merchantMember.memberId())
+                    .setRedirectUrl("http://localhost:3000/redeem")
+                    .setCsrfToken(csrfToken)
+                    .build();
+
+            String requestId = merchantMember.storeTokenRequestBlocking(request);
 
             //generate Token Request URL to redirect to
-            String tokenRequestUrl = tokenIO.generateTokenRequestUrl(requestId);
+            String tokenRequestUrl = tokenClient.generateTokenRequestUrlBlocking(requestId);
 
             //send a 200 with tokenRequestUrl body
             res.status(200);
@@ -97,19 +104,30 @@ public class Application {
         });
 
         Spark.get("/redeem", (req, res) -> {
-            String tokenId = req.queryMap("tokenId").value();
+            Map<String, String> queryParams = req.queryParams()
+                    .stream()
+                    .collect(Collectors.toMap(k -> k, k -> req.queryParams(k)));
+
+            // retrieve CSRF token from browser cookie
+            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
+
+            // check CSRF token and retrieve state and token ID from callback parameters
+            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
+                    queryParams,
+                    csrfToken);
+
             //get the token and check its validity
-            Token token = merchantMember.getToken(tokenId);
+            Token token = merchantMember.getTokenBlocking(callback.getTokenId());
 
             //redeem the token at the server to move the funds
-            Transfer transfer = merchantMember.redeemToken(token);
+            Transfer transfer = merchantMember.redeemTokenBlocking(token);
             res.status(200);
             return "Success! Redeemed transfer " + transfer.getId();
         });
 
         // Serve the web page, stylesheet and JS script:
         String script = Resources.toString(Resources.getResource("script.js"), UTF_8)
-                .replace("{alias}", merchantMember.firstAlias().getValue());
+                .replace("{alias}", merchantMember.firstAliasBlocking().getValue());
         Spark.get("/script.js", (req, res) -> script);
         String style = Resources.toString(Resources.getResource("style.css"), UTF_8);
         Spark.get("/style.css", (req, res) -> {
@@ -124,12 +142,12 @@ public class Application {
      * Initializes the SDK, pointing it to the specified environment and the
      * directory where keys are being stored.
      *
-     * @return TokenIO SDK instance
+     * @return TokenClient SDK instance
      * @throws IOException
      */
-    private static TokenIO initializeSDK() throws IOException {
+    private static TokenClient initializeSDK() throws IOException {
         Path keys = Files.createDirectories(Paths.get("./keys"));
-        return TokenIO.builder()
+        return TokenClient.builder()
                 .connectTo(SANDBOX)
                 // This KeyStore reads private keys from files.
                 // Here, it's set up to read the ./keys dir.
@@ -140,16 +158,16 @@ public class Application {
     }
 
     /**
-     * Using a TokenIO SDK client and the member ID of a previously-created
+     * Using a TokenClient SDK client and the member ID of a previously-created
      * Member (whose private keys we have stored locally).
      *
-     * @param tokenIO SDK
+     * @param tokenClient SDK
      * @param memberId ID of member
      * @return Logged-in member.
      */
-    private static Member loadMember(TokenIO tokenIO, String memberId) {
+    private static Member loadMember(TokenClient tokenClient, String memberId) {
         try {
-            return tokenIO.getMember(memberId);
+            return tokenClient.getMemberBlocking(memberId);
         } catch (StatusRuntimeException sre) {
             if (sre.getStatus().getCode() == NOT_FOUND) {
                 // We think we have a member's ID and keys, but we can't log in.
@@ -164,14 +182,14 @@ public class Application {
     }
 
     /**
-     * Using a TokenIO SDK client, create a new Member.
+     * Using a TokenClient SDK client, create a new Member.
      * This has the side effect of storing the new Member's private
      * keys in the ./keys directory.
      *
-     * @param tokenIO Token SDK client
+     * @param tokenClient Token SDK client
      * @return newly-created member
      */
-    private static Member createMember(TokenIO tokenIO) {
+    private static Member createMember(TokenClient tokenClient) {
         // Generate a random username.
         // If we try to create a member with an already-used name,
         // it will fail.
@@ -183,17 +201,17 @@ public class Application {
                 .setType(EMAIL)
                 .setValue(email)
                 .build();
-        return tokenIO.createBusinessMember(alias);
+        return tokenClient.createMemberBlocking(alias);
         // The newly-created member is automatically logged in.
     }
 
     /**
      * Log in existing member or create new member.
      *
-     * @param tokenIO Token SDK client
+     * @param tokenClient Token SDK client
      * @return Logged-in member
      */
-    private static Member initializeMember(TokenIO tokenIO) {
+    private static Member initializeMember(TokenClient tokenClient) {
         // The UnsecuredFileSystemKeyStore stores keys in a directory
         // named on the member's memberId, but with ":" replaced by "_".
         // Look for such a directory.
@@ -206,8 +224,8 @@ public class Application {
                 .filter(p -> p.contains("_")) // find dir names containing "_"
                 .map(p -> p.replace("_", ":")) // member ID
                 .findFirst()
-                .map(memberId -> loadMember(tokenIO, memberId))
-                .orElse(createMember(tokenIO));
+                .map(memberId -> loadMember(tokenClient, memberId))
+                .orElse(createMember(tokenClient));
     }
 
     /**

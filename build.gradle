@@ -12,7 +12,7 @@ buildscript {
 
 allprojects {
     group = 'io.token.sample'
-    version = '1.1.0'
+    version = '1.1.1'
 
     project.apply plugin: 'java'
     project.apply plugin: 'idea'
@@ -20,7 +20,7 @@ allprojects {
     ext {
         ver = [
                 sparkjava: '2.6.0',
-                tokenSdk: '1.1.0',
+                tokenSdk: '2.0.0-beta-9',
         ]
     }
 
