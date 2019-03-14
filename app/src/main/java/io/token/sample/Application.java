@@ -77,6 +77,9 @@ public class Application {
             // generate CSRF token
             String csrfToken = generateNonce();
 
+            // generate a reference ID for the token
+            String refId = generateNonce();
+
             // set CSRF token in browser cookie
             res.cookie(CSRF_TOKEN_KEY, csrfToken);
 
@@ -86,6 +89,7 @@ public class Application {
                     .addDestination(TransferEndpoint.newBuilder()
                             .setAccount(destination)
                             .build())
+                    .setRefId(refId)
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
                     .setRedirectUrl("http://localhost:3000/redeem")
