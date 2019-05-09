@@ -228,7 +228,7 @@ public class Application {
                 .map(p -> p.replace("_", ":")) // member ID
                 .findFirst()
                 .map(memberId -> loadMember(tokenClient, memberId))
-                .orElse(createMember(tokenClient));
+                .orElseGet(() -> createMember(tokenClient));
     }
 
     /**
