@@ -7,6 +7,10 @@ import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
 import com.google.common.io.Resources;
+import com.google.gson.Gson;
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
+
 import io.grpc.StatusRuntimeException;
 import io.token.proto.ProtoJson;
 import io.token.proto.common.account.AccountProtos.BankAccount;
@@ -22,15 +26,11 @@ import io.token.tpp.tokenrequest.TokenRequestCallback;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import spark.Spark;
 
@@ -66,7 +66,9 @@ public class Application {
 
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.post("/transfer", (req, res) -> {
-            Map<String, String> formData = parseFormData(req.body());
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            Map<String, String> formData = gson.fromJson(req.queryParams("data"), type);
 
             double amount = Double.parseDouble(formData.get("amount"));
             String currency = formData.get("currency");
@@ -92,7 +94,7 @@ public class Application {
                     .setRefId(refId)
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
-                    .setRedirectUrl("http://localhost:3000/redeem")
+                    .setRedirectUrl("http://localhost:3000/redeem-redirect")
                     .setCsrfToken(csrfToken)
                     .build();
 
@@ -100,23 +102,44 @@ public class Application {
 
             //generate Token Request URL to redirect to
             String tokenRequestUrl = tokenClient.generateTokenRequestUrlBlocking(requestId);
-            //send a 302 Redirect
-            res.status(302);
-            res.redirect(tokenRequestUrl);
-            return null;
+            res.status(200);
+            return tokenRequestUrl;
         });
 
+        // for popup flow, use Token.parseTokenRequestCallbackParams()
         Spark.get("/redeem", (req, res) -> {
-            Map<String, String> queryParams = req.queryParams()
-                    .stream()
-                    .collect(Collectors.toMap(k -> k, k -> req.queryParams(k)));
+            // parse JSON from data query param
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            Map<String, String> data = gson.fromJson(req.queryParams("data"), type);
 
             // retrieve CSRF token from browser cookie
             String csrfToken = req.cookie(CSRF_TOKEN_KEY);
 
             // check CSRF token and retrieve state and token ID from callback parameters
             TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
-                    queryParams,
+                    data,
+                    csrfToken);
+
+            //get the token and check its validity
+            Token token = merchantMember.getTokenBlocking(callback.getTokenId());
+
+            //redeem the token at the server to move the funds
+            Transfer transfer = merchantMember.redeemTokenBlocking(token);
+            res.status(200);
+            return "Success! Redeemed transfer " + transfer.getId();
+        });
+
+        // for redirect flow, use Token.parseTokenRequestCallbackUrl()
+        Spark.get("/redeem-redirect", (req, res) -> {
+            String callbackUrl = req.url() + "?" + req.queryString();
+
+            // retrieve CSRF token from browser cookie
+            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
+
+            // check CSRF token and retrieve state and token ID from callback parameters
+            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackUrlBlocking(
+                    callbackUrl,
                     csrfToken);
 
             //get the token and check its validity
@@ -229,24 +252,5 @@ public class Application {
                 .findFirst()
                 .map(memberId -> loadMember(tokenClient, memberId))
                 .orElseGet(() -> createMember(tokenClient));
-    }
-
-    /**
-     * Parse form data
-     */
-    private static Map<String, String> parseFormData(String query) {
-        try {
-            Map<String, String> queryPairs = new LinkedHashMap<String, String>();
-            String[] pairs = query.split("&");
-            for (String pair : pairs) {
-                int idx = pair.indexOf("=");
-                queryPairs.put(
-                        URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
-                        URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
-            }
-            return queryPairs;
-        } catch (UnsupportedEncodingException ex) {
-            throw new IllegalArgumentException("Couldn't parse form data");
-        }
     }
 }

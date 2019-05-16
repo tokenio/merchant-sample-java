@@ -1,8 +1,26 @@
+body {
+    color: #333;
+    font-family: sans-serif;
+}
+
 #tokenPayBtn {
     width: 230px;
-    margin-top: 10px;
+}
+
+.buttonTypeSelector {
+    display: block;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .buttonTypeSelector label {
-    margin-right: 10px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.buttonTypeSelector small {
+    color: gray;
+    display: block;
+    font-weight: bold;
+    margin-top: 5px;
 }
