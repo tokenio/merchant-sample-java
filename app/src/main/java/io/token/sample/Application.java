@@ -100,8 +100,10 @@ public class Application {
 
             String requestId = merchantMember.storeTokenRequestBlocking(request);
 
-            //generate Token Request URL to redirect to
+            // generate Token Request URL
             String tokenRequestUrl = tokenClient.generateTokenRequestUrlBlocking(requestId);
+
+            // return the generated Token Request URL
             res.status(200);
             return tokenRequestUrl;
         });
