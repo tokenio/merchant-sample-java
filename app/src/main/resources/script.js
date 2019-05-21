@@ -21,7 +21,7 @@ function clean() {
 
 // set up a function using the item data to populate the request to fetch the TokenRequestFunction
 function getTokenRequestUrl(done) {
-    fetch('http://localhost:3000/transfer', {
+    fetch('/transfer', {
         method: 'POST',
         mode: 'no-cors',
         headers: {

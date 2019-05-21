@@ -68,7 +68,7 @@ public class Application {
         Spark.post("/transfer", (req, res) -> {
             Gson gson = new Gson();
             Type type = new TypeToken<Map<String, String>>(){}.getType();
-            Map<String, String> formData = gson.fromJson(req.queryParams("data"), type);
+            Map<String, String> formData = gson.fromJson(req.body(), type);
 
             double amount = Double.parseDouble(formData.get("amount"));
             String currency = formData.get("currency");
@@ -82,6 +82,9 @@ public class Application {
             // generate a reference ID for the token
             String refId = generateNonce();
 
+            // generate redirect URL
+            String redirectUrl = req.scheme() + "://" + req.host() + "/redeem-redirect";
+
             // set CSRF token in browser cookie
             res.cookie(CSRF_TOKEN_KEY, csrfToken);
 
@@ -94,7 +97,7 @@ public class Application {
                     .setRefId(refId)
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
-                    .setRedirectUrl("http://localhost:3000/redeem-redirect")
+                    .setRedirectUrl(redirectUrl)
                     .setCsrfToken(csrfToken)
                     .build();
 
