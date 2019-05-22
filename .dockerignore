@@ -1,8 +1,9 @@
-.git
 .gradle
 keys
-node_modules
-.DS_Store
-.gitignore
 app/bin
 app/build
+.DS_Store
+.git
+.gitignore
+.dockerignore
+Dockerfile
