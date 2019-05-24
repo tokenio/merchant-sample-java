@@ -11,6 +11,7 @@ import io.grpc.StatusRuntimeException;
 import io.token.proto.ProtoJson;
 import io.token.proto.common.account.AccountProtos.BankAccount;
 import io.token.proto.common.alias.AliasProtos.Alias;
+import io.token.proto.common.member.MemberProtos.Profile;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferEndpoint;
@@ -204,7 +205,19 @@ public class Application {
                 .setType(EMAIL)
                 .setValue(email)
                 .build();
-        return tokenClient.createMemberBlocking(alias);
+        Member member = tokenClient.createMemberBlocking(alias);
+        // set member profile: the name and the profile picture
+        member.setProfileBlocking(Profile.newBuilder()
+                .setDisplayNameFirst("Demo")
+                .setDisplayNameLast("Merchant")
+                .build());
+        try {
+            byte[] pict = Resources.toByteArray(Resources.getResource("favicon.jpg"));
+            member.setProfilePictureBlocking("image/jpeg", pict);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return member;
         // The newly-created member is automatically logged in.
     }
 
@@ -218,8 +231,8 @@ public class Application {
         // The UnsecuredFileSystemKeyStore stores keys in a directory
         // named on the member's memberId, but with ":" replaced by "_".
         // Look for such a directory.
-        //   If found, try to log in with that memberId
-        //   If not found, create a new member.
+        // If found, try to log in with that memberId
+        // If not found, create a new member.
         File keysDir = new File("./keys");
         String[] paths = keysDir.list();
 
