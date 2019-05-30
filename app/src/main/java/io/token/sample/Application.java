@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 
+import spark.QueryParamsMap;
 import spark.Spark;
 
 /**
@@ -65,15 +66,13 @@ public class Application {
         Spark.port(3000);
 
         // Endpoint for transfer payment, called by client side to initiate a payment.
-        Spark.post("/transfer", (req, res) -> {
-            Gson gson = new Gson();
-            Type type = new TypeToken<Map<String, String>>(){}.getType();
-            Map<String, String> formData = gson.fromJson(req.body(), type);
+        Spark.get("/transfer", (req, res) -> {
+            QueryParamsMap queryData = req.queryMap();
 
-            double amount = Double.parseDouble(formData.get("amount"));
-            String currency = formData.get("currency");
+            double amount = Double.parseDouble(queryData.value("amount"));
+            String currency = queryData.value("currency");
             BankAccount destination = ProtoJson.fromJson(
-                    formData.get("destination"),
+                    "{\"sepa\":{\"iban\":\"DE16700222000072880129\"}}",
                     BankAccount.newBuilder());
 
             // generate CSRF token
@@ -83,7 +82,55 @@ public class Application {
             String refId = generateNonce();
 
             // generate redirect URL
-            String redirectUrl = req.scheme() + "://" + req.host() + "/redeem-redirect";
+            String redirectUrl = req.scheme() + "://" + req.host() + "/redeem";
+
+            // set CSRF token in browser cookie
+            res.cookie(CSRF_TOKEN_KEY, csrfToken);
+
+            // create the token request
+            TokenRequest request = TokenRequest.transferTokenRequestBuilder(amount, currency)
+                    .setDescription(queryData.value("description"))
+                    .addDestination(TransferEndpoint.newBuilder()
+                            .setAccount(destination)
+                            .build())
+                    .setRefId(refId)
+                    .setToAlias(merchantMember.firstAliasBlocking())
+                    .setToMemberId(merchantMember.memberId())
+                    .setRedirectUrl(redirectUrl)
+                    .setCsrfToken(csrfToken)
+                    .build();
+
+            String requestId = merchantMember.storeTokenRequestBlocking(request);
+
+            // generate Token Request URL
+            String tokenRequestUrl = tokenClient.generateTokenRequestUrlBlocking(requestId);
+
+            //send a 302 redirect
+            res.status(302);
+            res.redirect(tokenRequestUrl);
+            return null;
+        });
+
+        // Endpoint for transfer payment, called by client side to initiate a payment.
+        Spark.post("/transfer-popup", (req, res) -> {
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            Map<String, String> formData = gson.fromJson(req.body(), type);
+
+            double amount = Double.parseDouble(formData.get("amount"));
+            String currency = formData.get("currency");
+            BankAccount destination = ProtoJson.fromJson(
+                    "{\"sepa\":{\"iban\":\"DE16700222000072880129\"}}",
+                    BankAccount.newBuilder());
+
+            // generate CSRF token
+            String csrfToken = generateNonce();
+
+            // generate a reference ID for the token
+            String refId = generateNonce();
+
+            // generate redirect URL
+            String redirectUrl = req.scheme() + "://" + req.host() + "/redeem-popup";
 
             // set CSRF token in browser cookie
             res.cookie(CSRF_TOKEN_KEY, csrfToken);
@@ -111,19 +158,16 @@ public class Application {
             return tokenRequestUrl;
         });
 
-        // for popup flow, use Token.parseTokenRequestCallbackParams()
+        // for redirect flow, use Token.parseTokenRequestCallbackUrl()
         Spark.get("/redeem", (req, res) -> {
-            // parse JSON from data query param
-            Gson gson = new Gson();
-            Type type = new TypeToken<Map<String, String>>(){}.getType();
-            Map<String, String> data = gson.fromJson(req.queryParams("data"), type);
+            String callbackUrl = req.url() + "?" + req.queryString();
 
             // retrieve CSRF token from browser cookie
             String csrfToken = req.cookie(CSRF_TOKEN_KEY);
 
             // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
-                    data,
+            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackUrlBlocking(
+                    callbackUrl,
                     csrfToken);
 
             //get the token and check its validity
@@ -135,16 +179,19 @@ public class Application {
             return "Success! Redeemed transfer " + transfer.getId();
         });
 
-        // for redirect flow, use Token.parseTokenRequestCallbackUrl()
-        Spark.get("/redeem-redirect", (req, res) -> {
-            String callbackUrl = req.url() + "?" + req.queryString();
+        // for popup flow, use Token.parseTokenRequestCallbackParams()
+        Spark.get("/redeem-popup", (req, res) -> {
+            // parse JSON from data query param
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            Map<String, String> data = gson.fromJson(req.queryParams("data"), type);
 
             // retrieve CSRF token from browser cookie
             String csrfToken = req.cookie(CSRF_TOKEN_KEY);
 
             // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackUrlBlocking(
-                    callbackUrl,
+            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
+                    data,
                     csrfToken);
 
             //get the token and check its validity
