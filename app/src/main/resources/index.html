@@ -2,18 +2,19 @@
 <html>
   <head>
     <title>Merchant Sample - JAVA</title>
-    <link rel="stylesheet" href="/style.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
   </head>
   <body>
     <div class="buttonTypeSelector">
-      <input type="radio" id="buttonTypePopup" name="buttonTypeSelector" value="popup" checked />
+      Desktop mode:
+      <label for="buttonTypeRedirect">Redirect (default)</label>
+      <input type="radio" id="buttonTypeRedirect" name="buttonTypeSelector" value="REDIRECT" checked />
       <label for="buttonTypePopup">Popup</label>
-      <input type="radio" id="buttonTypeRedirect" name="buttonTypeSelector" value="redirect" />
-      <label for="buttonTypeRedirect">Redirect</label>
+      <input type="radio" id="buttonTypePopup" name="buttonTypeSelector" value="POPUP" />
+      <small>* Mobile is always redirect</small>
     </div>
     <div id="tokenPayBtn"></div>
     <script src="https://web-app.sandbox.token.io/token.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="/script.js"></script>
   </body>
 </html>

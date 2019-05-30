@@ -1,6 +1,4 @@
 "use strict";
-
-var elementId = "tokenPayBtn";
 var tokenController;
 var button;
 
@@ -20,99 +18,120 @@ function createRedirectButton() {
     // clean up instances
     clean();
 
-    // create TokenPopupController to handle Popup messages
-    tokenController = window.Token.createRedirectController();
+    // Client side Token object for creating the Token button, handling the Token Controller, etc
+    var token = new window.Token({
+        env: 'sandbox',
+    });
 
     // get button placeholder element
-    var element = document.getElementById(elementId);
+    var element = document.getElementById('tokenPayBtn');
 
     // create the button
-    button = window.Token.createTokenButton(element, {
-        label: "Redirect Token Quick Checkout",
+    button = token.createTokenButton(element, {
+        label: 'Token Quick Checkout',
     });
 
-    // bind the Token Button to the Redirect Controller when ready
-    tokenController.bindButtonClick(button, function(action) {
-    // Each time the button is clicked, a new tokenRequestUrl is created
-        getTokenRequestUrl(function(tokenRequestUrl) {
-            // Initialize popup using the tokenRequestUrl
-            action(tokenRequestUrl);
-        });
-    });
-    // enable button after binding
-    button.enable();
+    // create TokenController to handle messages
+    tokenController = token.createController();
+
+    // bind the Token Button to the Token Controller when ready
+    tokenController.bindButtonClick(
+        button, // Token Button
+        redirectTokenRequest, // redirect token request function
+        function(error) { // bindComplete callback
+            if (error) throw error;
+            // enable button after binding
+            button.enable();
+        },
+    );
 }
 
 function createPopupButton() {
     // clean up instances
     clean();
 
-    // create TokenPopupController to handle Popup messages
-    tokenController = window.Token.createPopupController();
+    // Client side Token object for creating the Token button, handling the Token Controller, etc
+    var token = new window.Token({
+        env: 'sandbox',
+    });
 
     // get button placeholder element
-    var element = document.getElementById(elementId);
+    var element = document.getElementById('tokenPayBtn');
 
     // create the button
-    button = window.Token.createTokenButton(element, {
-        label: "Popup Token Quick Checkout",
+    button = token.createTokenButton(element, {
+        label: 'Token Quick Checkout',
     });
 
-    // setup onLoad callback
-    tokenController.onLoad(function(controller) {
-        // bind the Token Button to the Popup Controller when ready
-        tokenController.bindButtonClick(button, function(action) {
-            // Each time the button is clicked, a new tokenRequestUrl is created
-            getTokenRequestUrl(function(tokenRequestUrl) {
-                // Initialize popup using the tokenRequestUrl
-                action(tokenRequestUrl);
-            });
-        });
-        // enable button after binding
-        button.enable();
+    // create TokenController to handle messages
+    tokenController = token.createController({
+        onSuccess: function(data) { // Success Callback
+            // build success URL
+            var successURL = `/redeem-popup?data=${window.encodeURIComponent(JSON.stringify(data))}`;
+            // navigate to success URL
+            window.location.assign(successURL);
+        },
+        onError: function(error) { // Failure Callback
+            throw error;
+        },
     });
 
-    // setup onSuccess callback
-    tokenController.onSuccess(function(data) { // Success Callback
-        var queryString = Object.keys(data).map(key => key + '=' + window.encodeURIComponent(data[key])).join('&');
-        // build success URL
-        var successURL = "/redeem?" + queryString;
-        // navigate to success URL
-        window.location.assign(successURL);
-    });
-
-    // setup onError callback
-    tokenController.onError(function(error) { // Failure Callback
-        throw error;
-    });
+    // bind the Token Button to the Token Controller when ready
+    tokenController.bindButtonClick(
+        button, // Token Button
+        getTokenRequestUrl, // token request function
+        function(error) { // bindComplete callback
+            if (error) throw error;
+            // enable button after binding
+            button.enable();
+        },
+        { // options
+            desktop: 'POPUP',
+        }
+    );
 }
 
-function getTokenRequestUrl(done) {
-    var XHR = new XMLHttpRequest();
-
-    //set up the access request
-    XHR.open("POST", "http://localhost:3000/transfer", true);
-
-    XHR.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-
-    var data = $.param({
-        merchantId: 'Merchant 123',
+function redirectTokenRequest() {
+    var data = {
         amount: 4.99,
         currency: 'EUR',
         description: 'Book Purchase',
-        destination: '{"sepa":{"iban":"DE16700222000072880129"}}'
-     });
+    };
 
-     // Define what happens on successful data submission
-     XHR.addEventListener("load", function(event) {
-         // execute callback once response is received
-         if (event.target.status === 200) {
-             done(event.target.responseURL);
-         }
-     });
+    // format data as URL query string
+    var queryString = Object.keys(data).map(key => key + '=' + window.encodeURIComponent(data[key])).join('&');
 
-    // Send the data; HTTP headers are set automatically
-    XHR.send(data);
+    // go to transfer
+    document.location.assign("/transfer?" + queryString);
+}
+
+// set up a function using the item data to populate the request to fetch the TokenRequestFunction
+function getTokenRequestUrl(done) {
+    var data = {
+        amount: 4.99,
+        currency: 'EUR',
+        description: 'Book Purchase',
+    };
+
+    // fetch Token Request URL
+    fetch('/transfer-popup', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(function(response) {
+        if (response.ok) {
+            response.text()
+                .then(function(data) {
+                    // execute callback when successful response is received
+                    done(data);
+                    console.log('data: ', data);
+                });
+        }
+    });
 }
 
 function setupButtonTypeSelector() {
@@ -125,15 +144,15 @@ function setupButtonTypeSelector() {
         selector[i].addEventListener('click', function(e) {
             var value = e.target.value;
             if (value === selected) return;
-            if (value === 'popup') {
+            selected = value;
+            if (value === 'POPUP') {
                 createPopupButton();
-            } else if (value === 'redirect') {
+            } else if (value === 'REDIRECT') {
                 createRedirectButton();
             }
-            selected = value;
         });
     }
-    createPopupButton();
+    createRedirectButton();
 }
 
 setupButtonTypeSelector();

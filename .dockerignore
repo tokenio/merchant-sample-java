@@ -1,0 +1,9 @@
+.gradle
+keys
+app/bin
+app/build
+.DS_Store
+.git
+.gitignore
+.dockerignore
+Dockerfile
