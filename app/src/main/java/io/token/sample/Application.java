@@ -287,8 +287,8 @@ public class Application {
                 .setDisplayNameLast("Merchant")
                 .build());
         try {
-            byte[] pict = Resources.toByteArray(Resources.getResource("favicon.jpg"));
-            member.setProfilePictureBlocking("image/jpeg", pict);
+            byte[] pict = Resources.toByteArray(Resources.getResource("southside.png"));
+            member.setProfilePictureBlocking("image/png", pict);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
