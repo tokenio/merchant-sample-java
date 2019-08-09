@@ -18,6 +18,8 @@ import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.member.MemberProtos.Profile;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
+import io.token.proto.common.transferinstructions.TransferInstructionsProtos;
+import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferDestination;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferEndpoint;
 import io.token.security.UnsecuredFileSystemKeyStore;
 import io.token.tokenrequest.TokenRequest;
@@ -72,9 +74,9 @@ public class Application {
 
             double amount = Double.parseDouble(queryData.value("amount"));
             String currency = queryData.value("currency");
-            BankAccount destination = ProtoJson.fromJson(
+            TransferDestination destination = ProtoJson.fromJson(
                     "{\"sepa\":{\"iban\":\"DE16700222000072880129\"}}",
-                    BankAccount.newBuilder());
+                    TransferDestination.newBuilder());
 
             // generate CSRF token
             String csrfToken = generateNonce();
@@ -91,9 +93,7 @@ public class Application {
             // create the token request
             TokenRequest request = TokenRequest.transferTokenRequestBuilder(amount, currency)
                     .setDescription(queryData.value("description"))
-                    .addDestination(TransferEndpoint.newBuilder()
-                            .setAccount(destination)
-                            .build())
+                    .addDestination(destination)
                     .setRefId(refId)
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
@@ -120,9 +120,9 @@ public class Application {
 
             double amount = Double.parseDouble(formData.get("amount"));
             String currency = formData.get("currency");
-            BankAccount destination = ProtoJson.fromJson(
+            TransferDestination destination = ProtoJson.fromJson(
                     "{\"sepa\":{\"iban\":\"DE16700222000072880129\"}}",
-                    BankAccount.newBuilder());
+                    TransferDestination.newBuilder());
 
             // generate CSRF token
             String csrfToken = generateNonce();
@@ -139,9 +139,7 @@ public class Application {
             // create the token request
             TokenRequest request = TokenRequest.transferTokenRequestBuilder(amount, currency)
                     .setDescription(formData.get("description"))
-                    .addDestination(TransferEndpoint.newBuilder()
-                            .setAccount(destination)
-                            .build())
+                    .addDestination(destination)
                     .setRefId(refId)
                     .setToAlias(merchantMember.firstAliasBlocking())
                     .setToMemberId(merchantMember.memberId())
@@ -232,7 +230,6 @@ public class Application {
                 // Here, it's set up to read the ./keys dir.
                 .withKeyStore(new UnsecuredFileSystemKeyStore(
                         keys.toFile()))
-                .devKey("4qY7lqQw8NOl9gng0ZHgT4xdiDqxqoGVutuZwrUYQsI")
                 .build();
     }
 
