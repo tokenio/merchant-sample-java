@@ -8,6 +8,7 @@ project.mainClassName = project.group + '.Application'
 
 dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: ver.sparkjava
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.21'
     compile group: 'io.token.sdk', name: 'tokenio-sdk-tpp', version: ver.tokenSdk
     compile 'com.google.code.gson:gson:2.8.5'
 }
