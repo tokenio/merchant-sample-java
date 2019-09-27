@@ -24,3 +24,13 @@ body {
     font-weight: bold;
     margin-top: 5px;
 }
+
+.transferTypeSelector {
+    display: block;
+    margin-bottom: 20px;
+}
+
+.transferTypeSelector label {
+    cursor: pointer;
+    margin-left: 10px;
+}
