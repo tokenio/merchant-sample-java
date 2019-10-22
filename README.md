@@ -34,6 +34,18 @@ it's sometimes rate-limited or disabled. If your organization will do
 more Token development and doesn't already have a developer key, contact
 Token to get one.
 
+### Implementing Cross Border payments
+
+To allow TPPs to make better decision while selecting the destination account,
+we have an additional flow available for them.
+
+For information on how to use it, go to the following link
+
+https://developer.token.io/docs/#cross-border-payments
+
+Note: If SWIFT is being used as destination account type in this demo, the account number should
+follow IBAN format in transfer destination if any CMA9 bank will be selected while demoing.
+
 ### Troubleshooting
 
 If anything goes wrong, try to clear your browser's cache before retest.
