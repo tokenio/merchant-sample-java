@@ -43,8 +43,8 @@ For information on how to use it, go to the following link
 
 https://developer.token.io/docs/#cross-border-payments
 
-Note: If SWIFT is being used as transfer destination account type in this demo, the account number should
-follow IBAN format if any UK bank will be selected while demoing.
+Note: If SWIFT is used as the transfer destination type and the user selects a UK bank,
+then the account number should follow IBAN format.
 
 ### Troubleshooting
 
