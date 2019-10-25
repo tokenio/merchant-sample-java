@@ -16,6 +16,7 @@ import io.token.proto.common.member.MemberProtos.Profile;
 import io.token.proto.common.submission.SubmissionProtos.StandingOrderSubmission;
 import io.token.proto.common.token.TokenProtos.Token;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
+import io.token.proto.common.transferinstructions.TransferInstructionsProtos;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferDestination;
 import io.token.security.UnsecuredFileSystemKeyStore;
 import io.token.tokenrequest.TokenRequest;
@@ -237,9 +238,15 @@ public class Application {
         double amount = Double.parseDouble(params.get("amount"));
         String currency = params.get("currency");
         String description = params.get("description");
-        TransferDestination destination = ProtoJson.fromJson(
-                "{\"sepa\":{\"iban\":\"DE16700222000072880129\"}}",
-                TransferDestination.newBuilder());
+        TransferDestination destination = TransferDestination.newBuilder()
+                .setSepa(TransferDestination.Sepa.newBuilder()
+                        .setBic("bic")
+                        .setIban("DE16700222000072880129")
+                        .build())
+                .setCustomerData(TransferInstructionsProtos.CustomerData.newBuilder()
+                        .addLegalNames("merchant-sample-java")
+                        .build())
+                .build();
 
         // generate CSRF token
         String csrfToken = generateNonce();
@@ -274,9 +281,15 @@ public class Application {
         double amount = Double.parseDouble(params.get("amount"));
         String currency = params.get("currency");
         String description = params.get("description");
-        TransferDestination destination = ProtoJson.fromJson(
-                "{\"sepa\":{\"iban\":\"DE16700222000072880129\"}}",
-                TransferDestination.newBuilder());
+        TransferDestination destination = TransferDestination.newBuilder()
+                .setSepa(TransferDestination.Sepa.newBuilder()
+                        .setBic("bic")
+                        .setIban("DE16700222000072880129")
+                        .build())
+                .setCustomerData(TransferInstructionsProtos.CustomerData.newBuilder()
+                        .addLegalNames("merchant-sample-java")
+                        .build())
+                .build();
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusYears(1);
         String refId = generateNonce();
