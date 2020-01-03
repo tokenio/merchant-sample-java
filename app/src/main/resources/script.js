@@ -71,8 +71,18 @@ function createPopupButton() {
         label: 'Token Quick Checkout',
     });
 
+    console.log("selectedTransferType:"+selectedTransferType);
     // create TokenController to handle messages
-    var path = selectedTransferType === 'SINGLE_IMMEDIATE' ? '/redeem-popup' : '/redeem-standing-order-popup';
+    var path = "";
+    
+    if (selectedTransferType === 'STANDING_ORDER') {
+        path = '/redeem-standing-order-popup';
+    } else if (selectedTransferType === 'ONE_STEP') {
+        path = '/redeem-one-step-payment-popup';
+    } else {
+        path = '/redeem-popup';
+    }
+    
     tokenController = token.createController({
         onSuccess: function(data) { // Success Callback
             // build success URL
@@ -104,16 +114,32 @@ function redirectTokenRequest(transferType) {
     // format data as URL query string
     var queryString = Object.keys(data).map(key => key + '=' + window.encodeURIComponent(data[key])).join('&');
 
-    // go to transfer
-    var path = (selectedTransferType === 'SINGLE_IMMEDIATE' ? '/transfer' : '/standing-order') + '?';
-    document.location.assign(path + queryString);
+    // go to transfer or standing-order or one step
+    var path = "";
+    
+    if (selectedTransferType === 'STANDING_ORDER') {
+        path = '/standing-order?';
+    } else if (selectedTransferType === 'ONE_STEP') {
+        path = '/one-step-payment?';
+    } else {
+        path = '/transfer?';
+    }    document.location.assign(path + queryString);
 }
 
 // set up a function using the item data to populate the request to fetch the TokenRequestFunction
 function getTokenRequestUrl(done) {
-    // fetch Token Request URL
-    var path = selectedTransferType === 'SINGLE_IMMEDIATE' ? '/transfer-popup' : '/standing-order-popup';
-    fetch(path, {
+    
+	var path="";
+	// fetch Token Request URL
+	if (selectedTransferType === 'STANDING_ORDER') {
+        path = '/standing-order-popup';
+    } else if (selectedTransferType === 'ONE_STEP') {
+        path = '/one-step-payment-popup';
+    } else {
+        path = '/transfer-popup';
+    }   
+	
+	fetch(path, {
         method: 'POST',
         mode: 'no-cors',
         headers: {
