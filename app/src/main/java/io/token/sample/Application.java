@@ -6,11 +6,11 @@ import static io.token.TokenClient.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.grpc.StatusRuntimeException;
-import io.token.proto.ProtoJson;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.member.MemberProtos.Profile;
 import io.token.proto.common.submission.SubmissionProtos.StandingOrderSubmission;
@@ -22,7 +22,6 @@ import io.token.security.UnsecuredFileSystemKeyStore;
 import io.token.tokenrequest.TokenRequest;
 import io.token.tpp.Member;
 import io.token.tpp.TokenClient;
-import io.token.tpp.tokenrequest.TokenRequestCallback;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +49,6 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
-    private static final String CSRF_TOKEN_KEY = "csrf_token";
     private static final TokenClient tokenClient = initializeSDK();
     private static final Member merchantMember = initializeMember(tokenClient);
 
@@ -132,43 +130,31 @@ public class Application {
 
         // for redirect flow, use Token.parseTokenRequestCallbackUrl()
         Spark.get("/redeem", (req, res) -> {
-            String callbackUrl = req.url() + "?" + req.queryString();
-
-            // retrieve CSRF token from browser cookie
-            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
-
-            // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackUrlBlocking(
-                    callbackUrl,
-                    csrfToken);
+            String tokenRequestId = merchantMember
+                    .onBankAuthCallbackBlocking("wood", req.queryString());
+            String tokenId = tokenClient.getTokenRequestResultBlocking(tokenRequestId).getTokenId();
 
             //get the token and check its validity
-            Token token = merchantMember.getTokenBlocking(callback.getTokenId());
+            Token token = merchantMember.getTokenBlocking(tokenId);
 
             //redeem the token at the server to move the funds
             Transfer transfer = merchantMember.redeemTokenBlocking(token);
             res.status(200);
-            return "Success! Redeemed transfer " + transfer.getId();
+            return "Success! Redeemed transfer " + transfer.getId()
+                    + "\n\n\n\n\n\n\n\n\n\n "
+                    + "Consent: \n"
+                    + new String(BaseEncoding.base64()
+                    .decode(merchantMember.getRawConsentBlocking(token.getId())), UTF_8);
         });
 
         // for popup flow, use Token.parseTokenRequestCallbackParams()
         Spark.get("/redeem-popup", (req, res) -> {
-            // parse JSON from data query param
-            Gson gson = new Gson();
-            Type type = new TypeToken<Map<String, String>>() {
-            }.getType();
-            Map<String, String> data = gson.fromJson(req.queryParams("data"), type);
-
-            // retrieve CSRF token from browser cookie
-            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
-
-            // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
-                    data,
-                    csrfToken);
+            String tokenRequestId = merchantMember
+                    .onBankAuthCallbackBlocking("wood", req.queryString());
+            String tokenId = tokenClient.getTokenRequestResultBlocking(tokenRequestId).getTokenId();
 
             //get the token and check its validity
-            Token token = merchantMember.getTokenBlocking(callback.getTokenId());
+            Token token = merchantMember.getTokenBlocking(tokenId);
 
             //redeem the token at the server to move the funds
             Transfer transfer = merchantMember.redeemTokenBlocking(token);
@@ -178,42 +164,26 @@ public class Application {
 
         // for redirect flow, use Token.parseTokenRequestCallbackUrl()
         Spark.get("/redeem-standing-order", (req, res) -> {
-            String callbackUrl = req.url() + "?" + req.queryString();
-
-            // retrieve CSRF token from browser cookie
-            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
-
-            // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackUrlBlocking(
-                    callbackUrl,
-                    csrfToken);
+            String tokenRequestId = merchantMember
+                    .onBankAuthCallbackBlocking("wood", req.queryString());
+            String tokenId = tokenClient.getTokenRequestResultBlocking(tokenRequestId).getTokenId();
 
             //redeem the token at the server to move the funds
             StandingOrderSubmission standingOrderSubmission = merchantMember
-                    .redeemStandingOrderTokenBlocking(callback.getTokenId());
+                    .redeemStandingOrderTokenBlocking(tokenId);
             res.status(200);
             return "Success! Redeemed standing order " + standingOrderSubmission.getId();
         });
 
         // for redirect flow, use Token.parseTokenRequestCallbackUrl()
         Spark.get("/redeem-standing-order-popup", (req, res) -> {
-            // parse JSON from data query param
-            Gson gson = new Gson();
-            Type type = new TypeToken<Map<String, String>>() {
-            }.getType();
-            Map<String, String> data = gson.fromJson(req.queryParams("data"), type);
-
-            // retrieve CSRF token from browser cookie
-            String csrfToken = req.cookie(CSRF_TOKEN_KEY);
-
-            // check CSRF token and retrieve state and token ID from callback parameters
-            TokenRequestCallback callback = tokenClient.parseTokenRequestCallbackParamsBlocking(
-                    data,
-                    csrfToken);
+            String tokenRequestId = merchantMember
+                    .onBankAuthCallbackBlocking("wood", req.queryString());
+            String tokenId = tokenClient.getTokenRequestResultBlocking(tokenRequestId).getTokenId();
 
             //redeem the token at the server to move the funds
             StandingOrderSubmission standingOrderSubmission = merchantMember
-                    .redeemStandingOrderTokenBlocking(callback.getTokenId());
+                    .redeemStandingOrderTokenBlocking(tokenId);
             res.status(200);
             return "Success! Redeemed standing order " + standingOrderSubmission.getId();
         });
@@ -248,14 +218,8 @@ public class Application {
                         .build())
                 .build();
 
-        // generate CSRF token
-        String csrfToken = generateNonce();
-
         // generate a reference ID for the token
         String refId = generateNonce();
-
-        // set CSRF token in browser cookie
-        response.cookie(CSRF_TOKEN_KEY, csrfToken);
 
         // create the token request
         TokenRequest request = TokenRequest.transferTokenRequestBuilder(amount, currency)
@@ -265,13 +229,12 @@ public class Application {
                 .setToAlias(merchantMember.firstAliasBlocking())
                 .setToMemberId(merchantMember.memberId())
                 .setRedirectUrl(callbackUrl)
-                .setCsrfToken(csrfToken)
                 .build();
 
         String requestId = merchantMember.storeTokenRequestBlocking(request);
 
         // generate Token Request URL
-        return tokenClient.generateTokenRequestUrlBlocking(requestId);
+        return merchantMember.getBankAuthUrlBlocking("wood", requestId);
     }
 
     private static String initializeStandingOrderTokenRequestUrl(
@@ -294,11 +257,6 @@ public class Application {
         LocalDate endDate = startDate.plusYears(1);
         String refId = generateNonce();
 
-        // generate CSRF token
-        String csrfToken = generateNonce();
-        // set CSRF token in browser cookie
-        response.cookie(CSRF_TOKEN_KEY, csrfToken);
-
         // create the token request
         TokenRequest request = TokenRequest.standingOrderRequestBuilder(
                 amount,
@@ -312,13 +270,12 @@ public class Application {
                 .setToAlias(merchantMember.firstAliasBlocking())
                 .setToMemberId(merchantMember.memberId())
                 .setRedirectUrl(callbackUrl)
-                .setCsrfToken(csrfToken)
                 .build();
 
         String requestId = merchantMember.storeTokenRequestBlocking(request);
 
         // generate Token Request URL
-        return tokenClient.generateTokenRequestUrlBlocking(requestId);
+        return merchantMember.getBankAuthUrlBlocking("wood", requestId);
     }
 
     /**
@@ -336,8 +293,6 @@ public class Application {
         }
         return TokenClient.builder()
                 .connectTo(SANDBOX)
-                // This KeyStore reads private keys from files.
-                // Here, it's set up to read the ./keys dir.
                 .withKeyStore(new UnsecuredFileSystemKeyStore(
                         keys.toFile()))
                 .build();
