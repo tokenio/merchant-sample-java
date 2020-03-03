@@ -1,6 +1,6 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.0'
-    id "com.google.osdetector" version "1.4.0"
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id "com.google.osdetector" version "1.6.2"
 }
 
 project.apply plugin: 'application'
@@ -8,9 +8,9 @@ project.mainClassName = project.group + '.Application'
 
 dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: ver.sparkjava
-    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.21'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
     compile group: 'io.token.sdk', name: 'tokenio-sdk-tpp', version: ver.tokenSdk
-    compile 'com.google.code.gson:gson:2.8.5'
+    compile 'com.google.code.gson:gson:2.8.6'
 }
 
 build.dependsOn(shadowJar)
