@@ -10,7 +10,6 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.grpc.StatusRuntimeException;
-import io.token.proto.ProtoJson;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.member.MemberProtos.Profile;
 import io.token.proto.common.submission.SubmissionProtos.StandingOrderSubmission;
