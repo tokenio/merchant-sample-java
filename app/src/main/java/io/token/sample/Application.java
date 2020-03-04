@@ -2,7 +2,7 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenClient.TokenCluster.SANDBOX;
+import static io.token.TokenClient.TokenCluster.DEVELOPMENT;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
@@ -20,6 +20,7 @@ import io.token.proto.common.transferinstructions.TransferInstructionsProtos;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferDestination;
 import io.token.security.UnsecuredFileSystemKeyStore;
 import io.token.tokenrequest.TokenRequest;
+import io.token.tpp.ExternalMetadata;
 import io.token.tpp.Member;
 import io.token.tpp.TokenClient;
 
@@ -140,11 +141,15 @@ public class Application {
             //redeem the token at the server to move the funds
             Transfer transfer = merchantMember.redeemTokenBlocking(token);
             res.status(200);
-            return "Success! Redeemed transfer " + transfer.getId()
-                    + "\n\n\n\n\n\n\n\n\n\n "
-                    + "Consent: \n"
-                    + new String(BaseEncoding.base64()
-                    .decode(merchantMember.getRawConsentBlocking(token.getId())), UTF_8);
+            ExternalMetadata metadata = merchantMember.getExternalMetadataBlocking(tokenRequestId);
+            return "Success! Redeemed transfer " + transfer.getId() + "<br/><br/>"
+                    + String.format(
+                    "standard: %s<br/>consent-id: %s<br/>consent: %s<bar/>",
+                    metadata.getOpenBankingStandard(),
+                    metadata.getConsentId().orElse("UNKNOWN"),
+                    metadata.getConsent()
+                            .map(c -> new String(BaseEncoding.base64().decode(c)))
+                            .orElse("UNKNOWN"));
         });
 
         // for popup flow, use Token.parseTokenRequestCallbackParams()
@@ -228,6 +233,7 @@ public class Application {
                 .setRefId(refId)
                 .setToAlias(merchantMember.firstAliasBlocking())
                 .setToMemberId(merchantMember.memberId())
+                .setBankId("wood")
                 .setRedirectUrl(callbackUrl)
                 .build();
 
@@ -292,7 +298,7 @@ public class Application {
             throw new RuntimeException(e);
         }
         return TokenClient.builder()
-                .connectTo(SANDBOX)
+                .connectTo(DEVELOPMENT)
                 .withKeyStore(new UnsecuredFileSystemKeyStore(
                         keys.toFile()))
                 .build();
