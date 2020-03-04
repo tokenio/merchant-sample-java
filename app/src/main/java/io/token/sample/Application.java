@@ -2,7 +2,7 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenClient.TokenCluster.DEVELOPMENT;
+import static io.token.TokenClient.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
@@ -298,7 +298,7 @@ public class Application {
             throw new RuntimeException(e);
         }
         return TokenClient.builder()
-                .connectTo(DEVELOPMENT)
+                .connectTo(SANDBOX)
                 .withKeyStore(new UnsecuredFileSystemKeyStore(
                         keys.toFile()))
                 .build();
