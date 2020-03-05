@@ -42,7 +42,7 @@ import spark.Spark;
 /**
  * Application main entry point. To execute, one needs to run something like:
  * <p>
- * 
+ *
  * <pre>
  * ./gradlew :app:shadowJar
  * java -jar ./app/build/libs/app-1.0.0-all.jar
