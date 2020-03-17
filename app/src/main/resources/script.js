@@ -26,7 +26,7 @@ function createRedirectButton(transferType) {
 
     // Client side Token object for creating the Token button, handling the Token Controller, etc
     var token = new window.Token({
-        env: 'sandbox',
+        env: 'stg',
     });
 
     // get button placeholder element
@@ -60,7 +60,7 @@ function createPopupButton() {
 
     // Client side Token object for creating the Token button, handling the Token Controller, etc
     var token = new window.Token({
-        env: 'sandbox',
+        env: 'stg',
     });
 
     // get button placeholder element

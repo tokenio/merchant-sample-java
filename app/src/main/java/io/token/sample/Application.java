@@ -2,7 +2,7 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenClient.TokenCluster.SANDBOX;
+import static io.token.TokenClient.TokenCluster.STAGING;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 
@@ -10,13 +10,16 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.grpc.StatusRuntimeException;
+import io.token.proto.common.account.AccountProtos.BankAccount;
 import io.token.proto.common.alias.AliasProtos.Alias;
 import io.token.proto.common.member.MemberProtos.Profile;
 import io.token.proto.common.submission.SubmissionProtos.StandingOrderSubmission;
 import io.token.proto.common.token.TokenProtos.Token;
+import io.token.proto.common.transaction.TransactionProtos.TransactionStatus;
 import io.token.proto.common.transfer.TransferProtos.Transfer;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos;
 import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferDestination;
+import io.token.proto.common.transferinstructions.TransferInstructionsProtos.TransferEndpoint;
 import io.token.security.UnsecuredFileSystemKeyStore;
 import io.token.tokenrequest.TokenRequest;
 import io.token.tpp.Member;
@@ -52,6 +55,7 @@ public class Application {
     private static final String CSRF_TOKEN_KEY = "csrf_token";
     private static final TokenClient tokenClient = initializeSDK();
     private static final Member merchantMember = initializeMember(tokenClient);
+    private static String transferId = null;
 
     /**
      * Main function.
@@ -141,13 +145,25 @@ public class Application {
                     callbackUrl,
                     csrfToken);
 
-            //get the token and check its validity
-            Token token = merchantMember.getTokenBlocking(callback.getTokenId());
+            String transferId = req.queryParams("transferId");
+            String transferStatus = req.queryParams("transferStatus");
+            Application.transferId = transferId;
 
-            //redeem the token at the server to move the funds
-            Transfer transfer = merchantMember.redeemTokenBlocking(token);
             res.status(200);
-            return "Success! Redeemed transfer " + transfer.getId();
+            return String.format(
+                    "Transfer ID: %s, Transfer status: %s",
+                    transferId,
+                    transferStatus);
+        });
+
+        Spark.get("/transfer-status", (req, res) -> {
+            TransactionStatus status = merchantMember
+                    .getTransferBlocking(Application.transferId)
+                    .getStatus();
+            return String.format(
+                    "Transfer ID: %s, Transfer status: %s",
+                    transferId,
+                    status);
         });
 
         // for popup flow, use Token.parseTokenRequestCallbackParams()
@@ -264,13 +280,19 @@ public class Application {
                 .setToAlias(merchantMember.firstAliasBlocking())
                 .setToMemberId(merchantMember.memberId())
                 .setRedirectUrl(callbackUrl)
+                .setSource(TransferEndpoint.newBuilder()
+                        .setAccount(BankAccount.newBuilder()
+                                .setIban(BankAccount.Iban.newBuilder()
+                                        .setIban("EE872200221001012135")))
+                        .build())
                 .setCsrfToken(csrfToken)
+                .setBankId("ngp-habaee")
                 .build();
 
         String requestId = merchantMember.storeTokenRequestBlocking(request);
 
         // generate Token Request URL
-        return tokenClient.generateTokenRequestUrlBlocking(requestId);
+        return tokenClient.generateTokenRequestUrlBlocking(requestId) + "&dk=smartym";
     }
 
     private static String initializeStandingOrderTokenRequestUrl(
@@ -334,7 +356,8 @@ public class Application {
             throw new RuntimeException(e);
         }
         return TokenClient.builder()
-                .connectTo(SANDBOX)
+                .connectTo(STAGING)
+                .timeout(30_000L)
                 // This KeyStore reads private keys from files.
                 // Here, it's set up to read the ./keys dir.
                 .withKeyStore(new UnsecuredFileSystemKeyStore(
