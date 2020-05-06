@@ -122,7 +122,7 @@ public class Application {
 
         Spark.get("/one-step-payment", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-one-step-payment";
+            String callbackUrl = req.scheme() + "://" + req.host() + "/redirect-one-step-payment";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(params, callbackUrl, res, "ONE_STEP");
@@ -139,7 +139,7 @@ public class Application {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
             String callbackUrl =
-                    req.scheme() + "://" + req.host() + "/redeem-one-step-payment-popup";
+                    req.scheme() + "://" + req.host() + "/redirect-one-step-payment-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "ONE_STEP");
@@ -150,13 +150,20 @@ public class Application {
         });
 
         // for redirect flow, use Token.parseTokenRequestCallbackUrl()
-        Spark.get("/redeem-one-step-payment", (req, res) -> {
-            return redeem(req, res);
+        Spark.get("/redirect-one-step-payment", (req, res) -> {
+            res.status(200);
+            return "Success! One Step Payment " + req.queryParams("transferId");
         });
 
         // for redirect flow, use Token.parseTokenRequestCallbackUrl()
-        Spark.get("/redeem-one-step-payment-popup", (req, res) -> {
-            return redeemPopup(req, res);
+        Spark.get("/redirect-one-step-payment-popup", (req, res) -> {
+            // parse JSON from data query param
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>() {
+            }.getType();
+            Map<String, String> data = gson.fromJson(req.queryParams("data"), type);
+            res.status(200);
+            return "Success! One Step Payment " + data.get("transferId");
         });
 
         // for redirect flow, use Token.parseTokenRequestCallbackUrl()
@@ -283,7 +290,7 @@ public class Application {
         String bankId = "ngp-cbi-05034";
         TransferEndpoint source = TransferEndpoint.newBuilder()
                 .setAccount(BankAccount.newBuilder()
-                        .setSepa(BankAccount.Sepa.newBuilder()
+                        .setIban(BankAccount.Iban.newBuilder()
                                 .setIban("IT77O0848283352871412938123").build())
                         .build())
                 .setBankId(bankId).build();
