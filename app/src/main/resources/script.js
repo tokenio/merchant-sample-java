@@ -37,37 +37,6 @@ function tokenRedirectPath() {
     return path;
 }
 
-function redeemTokenPopUp() {
-    var path = "";
-    if (selectedTransferType === 'STANDING_ORDER') {
-        path = '/redeem-standing-order-popup';
-    } else if (selectedTransferType === 'FUTURE_DATED') {
-        path = '/redeem-future-dated-popup';
-    } else if (selectedTransferType === 'ONE_STEP') {
-        path = '/redirect-one-step-payment-popup';
-    } else if (selectedTransferType === 'CROSS_BORDER') {
-        path = '/redeem-popup';
-    } else {
-        path = '/redeem-popup';
-    }
-    return path;
-}
-
-function tokenPopupPath() {
-    var path = "";
-    if (selectedTransferType === 'STANDING_ORDER') {
-        path = '/standing-order-popup?';
-    } else if (selectedTransferType === 'FUTURE_DATED') {
-        path = '/future-dated-popup?';
-    } else if (selectedTransferType === 'ONE_STEP') {
-        path = '/one-step-payment-popup?';
-    } else if (selectedTransferType === 'CROSS_BORDER') {
-        path = '/cross-border-popup?';
-    } else {
-        path = '/transfer-popup?';
-    }
-    return path;
-}
 
 function setupButtonTypeSelector() {
     var transferTypeSelector = document.getElementsByName('transferTypeSelector');
@@ -121,7 +90,7 @@ function createTokenButton(type) {
         label: 'Token Quick Checkout',
     });
 
-    var path = (type === 'POPUP') ? tokenPopupPath() : tokenRedirectPath();
+    var path = tokenRedirectPath();
     var queryString = Object.keys(data).map(key => key + '=' + window.encodeURIComponent(data[key])).join('&');
 
     tokenController = token.createController({
