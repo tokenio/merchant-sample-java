@@ -2,7 +2,7 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenClient.TokenCluster.SANDBOX;
+import static io.token.TokenClient.TokenCluster.PRODUCTION;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 import java.io.File;
@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -61,14 +62,25 @@ public class Application {
      */
     public static void main(String[] args) throws IOException {
         // Initializes the server
-        Spark.port(3000);
+//        Spark.port(3000);
+        Set<String> ukBanks = tokenClient.getBanks(null, "GB", null, null, null, "cma9").blockingSingle()
+                .stream()
+                .map(b -> b.getId())
+                .collect(Collectors.toSet());
+        for (String bankId : ukBanks) {
+            try {
+                initializeTokenRequestUrl(bankId);
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
+        }
 
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.get("/transfer", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
             String callbackUrl = req.scheme() + "://" + req.host() + "/redeem";
 
-            String tokenRequestUrl = initializeTokenRequestUrl(params, callbackUrl, res, "DEFAULT");
+            String tokenRequestUrl = initializeTokenRequestUrl("wood");
 
             // send a 302 redirect
             res.status(302);
@@ -85,7 +97,7 @@ public class Application {
             String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-popup";
 
             String tokenRequestUrl =
-                    initializeTokenRequestUrl(formData, callbackUrl, res, "DEFAULT");
+                    initializeTokenRequestUrl("wood");
 
             // return the generated Token Request URL
             res.status(200);
@@ -125,7 +137,7 @@ public class Application {
             String callbackUrl = req.scheme() + "://" + req.host() + "/redirect-one-step-payment";
 
             String tokenRequestUrl =
-                    initializeTokenRequestUrl(params, callbackUrl, res, "ONE_STEP");
+                    initializeTokenRequestUrl("wood");
 
             // send a 302 redirect
             res.status(302);
@@ -142,7 +154,7 @@ public class Application {
                     req.scheme() + "://" + req.host() + "/redirect-one-step-payment-popup";
 
             String tokenRequestUrl =
-                    initializeTokenRequestUrl(formData, callbackUrl, res, "ONE_STEP");
+                    initializeTokenRequestUrl("wood");
 
             // return the generated Token Request URL
             res.status(200);
@@ -273,27 +285,15 @@ public class Application {
 
     }
 
-    private static String initializeTokenRequestUrl(Map<String, String> params, String callbackUrl,
-            Response response, String transferType) {
-        double amount = Double.parseDouble(params.get("amount"));
-        String currency = params.get("currency");
-        String description = params.get("description");
+    private static String initializeTokenRequestUrl(String bankId) {
+        double amount = 1.;
+        String currency = "GBP";
+        String description = "desc";
         TransferDestination destination = TransferDestination.newBuilder()
-                .setSepa(TransferDestination.Sepa.newBuilder().setBic("bic")
-                        .setIban("DE16700222000072880129").build())
-                .setCustomerData(TransferInstructionsProtos.CustomerData.newBuilder()
-                        .addLegalNames("merchant-sample-java").build())
+                .setFasterPayments(TransferDestination.FasterPayments.newBuilder()
+                        .setAccountNumber("64264264")
+                        .setSortCode("642642").build())
                 .build();
-
-        // This is testing account for one of bank to test one step support
-        // Will need bank credentials to complete the flow. Test Credentials are available.
-        String bankId = "ngp-cbi-05034";
-        TransferEndpoint source = TransferEndpoint.newBuilder()
-                .setAccount(BankAccount.newBuilder()
-                        .setIban(BankAccount.Iban.newBuilder()
-                                .setIban("IT77O0848283352871412938123").build())
-                        .build())
-                .setBankId(bankId).build();
 
         // generate CSRF token
         String csrfToken = generateNonce();
@@ -301,26 +301,19 @@ public class Application {
         // generate a reference ID for the token
         String refId = generateNonce();
 
-        // set CSRF token in browser cookie
-        response.cookie(CSRF_TOKEN_KEY, csrfToken);
-
         // create the token request builder
         TransferBuilder tokenRequestBuilder =
                 TokenRequest.transferTokenRequestBuilder(amount, currency)
                         .setDescription(description).addDestination(destination).setRefId(refId)
                         .setToAlias(merchantMember.firstAliasBlocking())
-                        .setToMemberId(merchantMember.memberId()).setRedirectUrl(callbackUrl)
-                        .setCsrfToken(csrfToken);
-
-        if (transferType.equals("ONE_STEP")) {
-            tokenRequestBuilder.setSource(source);
-            tokenRequestBuilder.setBankId(bankId);
-        }
-
+                        .setToMemberId(merchantMember.memberId())
+                        .setRedirectUrl("https://merchant-demo.com/gateway")
+                        .setCsrfToken(csrfToken)
+                        .addDestination(destination);
         String requestId = merchantMember.storeTokenRequestBlocking(tokenRequestBuilder.build());
 
         // generate Token Request URL
-        return tokenClient.generateTokenRequestUrlBlocking(requestId);
+        return merchantMember.getBankAuthUrlBlocking(bankId, requestId);
     }
 
     private static String initializeStandingOrderTokenRequestUrl(Map<String, String> params,
@@ -371,7 +364,7 @@ public class Application {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return TokenClient.builder().connectTo(SANDBOX)
+        return TokenClient.builder().connectTo(PRODUCTION)
                 // This KeyStore reads private keys from files.
                 // Here, it's set up to read the ./keys dir.
                 .withKeyStore(new UnsecuredFileSystemKeyStore(keys.toFile())).build();
