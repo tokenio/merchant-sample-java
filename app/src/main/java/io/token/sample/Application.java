@@ -72,7 +72,7 @@ public class Application {
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.get("/transfer", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem";
+            String callbackUrl = "http://localhost:" + PORT + "/redeem";
 
             String tokenRequestUrl = initializeTokenRequestUrl(params, callbackUrl, res, "DEFAULT");
 
@@ -88,7 +88,7 @@ public class Application {
             Type type = new TypeToken<Map<String, String>>() {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-popup";
+            String callbackUrl = "http://localhost:" + PORT + "/redeem-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "DEFAULT");
@@ -100,7 +100,7 @@ public class Application {
 
         Spark.get("/standing-order", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-standing-order";
+            String callbackUrl = "http://localhost:" + PORT + "/redeem-standing-order";
 
             String tokenRequestUrl =
                     initializeStandingOrderTokenRequestUrl(params, callbackUrl, res);
@@ -116,7 +116,7 @@ public class Application {
             Type type = new TypeToken<Map<String, String>>() {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-standing-order-popup";
+            String callbackUrl = "http://localhost:" + PORT + "/redeem-standing-order-popup";
 
             String tokenRequestUrl =
                     initializeStandingOrderTokenRequestUrl(formData, callbackUrl, res);
@@ -128,7 +128,7 @@ public class Application {
 
         Spark.get("/one-step-payment", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redirect-one-step-payment";
+            String callbackUrl = "http://localhost:" + PORT + "/redirect-one-step-payment";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(params, callbackUrl, res, "ONE_STEP");
@@ -145,7 +145,7 @@ public class Application {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
             String callbackUrl =
-                    req.scheme() + "://" + req.host() + "/redirect-one-step-payment-popup";
+                    "http://localhost:" + PORT + "/redirect-one-step-payment-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "ONE_STEP");
