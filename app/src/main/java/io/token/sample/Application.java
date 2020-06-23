@@ -54,11 +54,11 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
+    private static final String LOCALHOST = "http://localhost:";
     private static final int PORT = 3000;
     private static final String CSRF_TOKEN_KEY = "csrf_token";
     private static final TokenClient tokenClient = initializeSDK();
     private static final Member merchantMember = initializeMember(tokenClient);
-    public static final String LOCALHOST = "http://localhost:";
 
     /**
      * Main function.
