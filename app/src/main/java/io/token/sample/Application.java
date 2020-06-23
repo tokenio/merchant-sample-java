@@ -5,6 +5,7 @@ import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenClient.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -14,8 +15,11 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,6 +39,7 @@ import io.token.tokenrequest.TokenRequest.TransferBuilder;
 import io.token.tpp.Member;
 import io.token.tpp.TokenClient;
 import io.token.tpp.tokenrequest.TokenRequestCallback;
+
 import spark.QueryParamsMap;
 import spark.Response;
 import spark.Spark;
@@ -49,6 +54,7 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
+    private static final int PORT = 3000;
     private static final String CSRF_TOKEN_KEY = "csrf_token";
     private static final TokenClient tokenClient = initializeSDK();
     private static final Member merchantMember = initializeMember(tokenClient);
@@ -61,7 +67,7 @@ public class Application {
      */
     public static void main(String[] args) throws IOException {
         // Initializes the server
-        Spark.port(3000);
+        Spark.port(PORT);
 
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.get("/transfer", (req, res) -> {
@@ -273,7 +279,8 @@ public class Application {
 
     }
 
-    private static String initializeTokenRequestUrl(Map<String, String> params, String callbackUrl,
+    private static String initializeTokenRequestUrl(
+            Map<String, String> params, String callbackUrl,
             Response response, String transferType) {
         double amount = Double.parseDouble(params.get("amount"));
         String currency = params.get("currency");
@@ -323,7 +330,8 @@ public class Application {
         return tokenClient.generateTokenRequestUrlBlocking(requestId);
     }
 
-    private static String initializeStandingOrderTokenRequestUrl(Map<String, String> params,
+    private static String initializeStandingOrderTokenRequestUrl(
+            Map<String, String> params,
             String callbackUrl, Response response) {
         double amount = Double.parseDouble(params.get("amount"));
         String currency = params.get("currency");
@@ -427,6 +435,16 @@ public class Application {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        List<String> redirectUrls = Stream.of(
+                "/redeem",
+                "/redeem-popup",
+                "/redeem-standing-order",
+                "/redeem-standing-order-popup",
+                "/redirect-one-step-payment",
+                "/redirect-one-step-payment-popup")
+                .map(endpoint -> "http://localhost:" + PORT + endpoint)
+                .collect(Collectors.toList());
+        member.addRedirectUrlsBlocking(redirectUrls);
         return member;
         // The newly-created merchantMember is automatically logged in.
     }
