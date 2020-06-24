@@ -54,8 +54,8 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
-    private static final String LOCALHOST = "http://localhost:";
     private static final int PORT = 3000;
+    private static final String BASE_URL = "http://localhost:" + PORT;
     private static final String CSRF_TOKEN_KEY = "csrf_token";
     private static final TokenClient tokenClient = initializeSDK();
     private static final Member merchantMember = initializeMember(tokenClient);
@@ -73,7 +73,7 @@ public class Application {
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.get("/transfer", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = LOCALHOST + PORT + "/redeem";
+            String callbackUrl = BASE_URL + "/redeem";
 
             String tokenRequestUrl = initializeTokenRequestUrl(params, callbackUrl, res, "DEFAULT");
 
@@ -89,7 +89,7 @@ public class Application {
             Type type = new TypeToken<Map<String, String>>() {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
-            String callbackUrl = LOCALHOST + PORT + "/redeem-popup";
+            String callbackUrl = BASE_URL + "/redeem-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "DEFAULT");
@@ -101,7 +101,7 @@ public class Application {
 
         Spark.get("/standing-order", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = LOCALHOST + PORT + "/redeem-standing-order";
+            String callbackUrl = BASE_URL + "/redeem-standing-order";
 
             String tokenRequestUrl =
                     initializeStandingOrderTokenRequestUrl(params, callbackUrl, res);
@@ -117,7 +117,7 @@ public class Application {
             Type type = new TypeToken<Map<String, String>>() {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
-            String callbackUrl = LOCALHOST + PORT + "/redeem-standing-order-popup";
+            String callbackUrl = BASE_URL + "/redeem-standing-order-popup";
 
             String tokenRequestUrl =
                     initializeStandingOrderTokenRequestUrl(formData, callbackUrl, res);
@@ -129,7 +129,7 @@ public class Application {
 
         Spark.get("/one-step-payment", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = LOCALHOST + PORT + "/redirect-one-step-payment";
+            String callbackUrl = BASE_URL + "/redirect-one-step-payment";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(params, callbackUrl, res, "ONE_STEP");
@@ -146,7 +146,7 @@ public class Application {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
             String callbackUrl =
-                    LOCALHOST + PORT + "/redirect-one-step-payment-popup";
+                    BASE_URL + "/redirect-one-step-payment-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "ONE_STEP");
@@ -443,7 +443,7 @@ public class Application {
                 "/redeem-standing-order-popup",
                 "/redirect-one-step-payment",
                 "/redirect-one-step-payment-popup")
-                .map(endpoint -> LOCALHOST + PORT + endpoint)
+                .map(endpoint -> BASE_URL + endpoint)
                 .collect(Collectors.toList());
         member.addRedirectUrlsBlocking(redirectUrls);
         return member;
