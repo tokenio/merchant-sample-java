@@ -5,6 +5,7 @@ import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenClient.TokenCluster.SANDBOX;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -14,8 +15,11 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,6 +39,7 @@ import io.token.tokenrequest.TokenRequest.TransferBuilder;
 import io.token.tpp.Member;
 import io.token.tpp.TokenClient;
 import io.token.tpp.tokenrequest.TokenRequestCallback;
+
 import spark.QueryParamsMap;
 import spark.Response;
 import spark.Spark;
@@ -49,6 +54,8 @@ import spark.Spark;
  * </pre>
  */
 public class Application {
+    private static final int PORT = 3000;
+    private static final String BASE_URL = "http://localhost:" + PORT;
     private static final String CSRF_TOKEN_KEY = "csrf_token";
     private static final TokenClient tokenClient = initializeSDK();
     private static final Member merchantMember = initializeMember(tokenClient);
@@ -61,12 +68,12 @@ public class Application {
      */
     public static void main(String[] args) throws IOException {
         // Initializes the server
-        Spark.port(3000);
+        Spark.port(PORT);
 
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.get("/transfer", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem";
+            String callbackUrl = BASE_URL + "/redeem";
 
             String tokenRequestUrl = initializeTokenRequestUrl(params, callbackUrl, res, "DEFAULT");
 
@@ -82,7 +89,7 @@ public class Application {
             Type type = new TypeToken<Map<String, String>>() {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-popup";
+            String callbackUrl = BASE_URL + "/redeem-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "DEFAULT");
@@ -94,7 +101,7 @@ public class Application {
 
         Spark.get("/standing-order", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-standing-order";
+            String callbackUrl = BASE_URL + "/redeem-standing-order";
 
             String tokenRequestUrl =
                     initializeStandingOrderTokenRequestUrl(params, callbackUrl, res);
@@ -110,7 +117,7 @@ public class Application {
             Type type = new TypeToken<Map<String, String>>() {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redeem-standing-order-popup";
+            String callbackUrl = BASE_URL + "/redeem-standing-order-popup";
 
             String tokenRequestUrl =
                     initializeStandingOrderTokenRequestUrl(formData, callbackUrl, res);
@@ -122,7 +129,7 @@ public class Application {
 
         Spark.get("/one-step-payment", (req, res) -> {
             Map<String, String> params = toMap(req.queryMap());
-            String callbackUrl = req.scheme() + "://" + req.host() + "/redirect-one-step-payment";
+            String callbackUrl = BASE_URL + "/redirect-one-step-payment";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(params, callbackUrl, res, "ONE_STEP");
@@ -139,7 +146,7 @@ public class Application {
             }.getType();
             Map<String, String> formData = gson.fromJson(req.body(), type);
             String callbackUrl =
-                    req.scheme() + "://" + req.host() + "/redirect-one-step-payment-popup";
+                    BASE_URL + "/redirect-one-step-payment-popup";
 
             String tokenRequestUrl =
                     initializeTokenRequestUrl(formData, callbackUrl, res, "ONE_STEP");
@@ -273,7 +280,8 @@ public class Application {
 
     }
 
-    private static String initializeTokenRequestUrl(Map<String, String> params, String callbackUrl,
+    private static String initializeTokenRequestUrl(
+            Map<String, String> params, String callbackUrl,
             Response response, String transferType) {
         double amount = Double.parseDouble(params.get("amount"));
         String currency = params.get("currency");
@@ -323,7 +331,8 @@ public class Application {
         return tokenClient.generateTokenRequestUrlBlocking(requestId);
     }
 
-    private static String initializeStandingOrderTokenRequestUrl(Map<String, String> params,
+    private static String initializeStandingOrderTokenRequestUrl(
+            Map<String, String> params,
             String callbackUrl, Response response) {
         double amount = Double.parseDouble(params.get("amount"));
         String currency = params.get("currency");
@@ -427,6 +436,16 @@ public class Application {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        List<String> redirectUrls = Stream.of(
+                "/redeem",
+                "/redeem-popup",
+                "/redeem-standing-order",
+                "/redeem-standing-order-popup",
+                "/redirect-one-step-payment",
+                "/redirect-one-step-payment-popup")
+                .map(endpoint -> BASE_URL + endpoint)
+                .collect(Collectors.toList());
+        member.addRedirectUrlsBlocking(redirectUrls);
         return member;
         // The newly-created merchantMember is automatically logged in.
     }
