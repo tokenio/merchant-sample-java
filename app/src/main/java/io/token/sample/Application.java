@@ -2,7 +2,7 @@ package io.token.sample;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
-import static io.token.TokenClient.TokenCluster.PRODUCTION;
+import static io.token.TokenClient.TokenCluster.DEVELOPMENT;
 import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
 import static io.token.util.Util.generateNonce;
 import java.io.File;
@@ -12,8 +12,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,13 +70,23 @@ public class Application {
                 .stream()
                 .map(b -> b.getId())
                 .collect(Collectors.toSet());
+//        System.out.println("<<<<<<<<<<<<<" + ukBanks.size());
+        Map<String, Exception> exceptionList = new HashMap<>();
         for (String bankId : ukBanks) {
             try {
                 initializeTokenRequestUrl(bankId);
             } catch (Exception ex) {
                 System.out.println(ex);
+                exceptionList.put(bankId, ex);
             }
         }
+        exceptionList.forEach((k, v) -> {
+            System.out.println("----------- " + k + " -------------");
+            System.out.println(v);
+        });
+
+        System.out.println("SUCCESS RATE: " + (ukBanks.size() - exceptionList.size()) + " / " + ukBanks.size());
+
 
         // Endpoint for transfer payment, called by client side to initiate a payment.
         Spark.get("/transfer", (req, res) -> {
@@ -291,8 +304,8 @@ public class Application {
         String description = "desc";
         TransferDestination destination = TransferDestination.newBuilder()
                 .setFasterPayments(TransferDestination.FasterPayments.newBuilder()
-                        .setAccountNumber("64264264")
-                        .setSortCode("642642").build())
+                        .setAccountNumber("07628161")
+                        .setSortCode("236972").build())
                 .build();
 
         // generate CSRF token
@@ -364,7 +377,7 @@ public class Application {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return TokenClient.builder().connectTo(PRODUCTION)
+        return TokenClient.builder().connectTo(DEVELOPMENT)
                 // This KeyStore reads private keys from files.
                 // Here, it's set up to read the ./keys dir.
                 .withKeyStore(new UnsecuredFileSystemKeyStore(keys.toFile())).build();
