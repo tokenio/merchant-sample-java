@@ -74,7 +74,8 @@ public class Application {
         Map<String, Exception> exceptionList = new HashMap<>();
         for (String bankId : ukBanks) {
             try {
-                initializeTokenRequestUrl(bankId);
+                //initializeTokenRequestUrl(bankId);
+                initializeStandingOrderTokenRequestUrl(bankId);
             } catch (Exception ex) {
                 System.out.println(ex);
                 exceptionList.put(bankId, ex);
@@ -329,6 +330,38 @@ public class Application {
         return merchantMember.getBankAuthUrlBlocking(bankId, requestId);
     }
 
+    private static String initializeStandingOrderTokenRequestUrl(String bankId) {
+        double amount = 1.;
+        String currency = "GBP";
+        String description = "desc";
+        TransferDestination destination = TransferDestination.newBuilder()
+                .setSepa(TransferDestination.Sepa.newBuilder().setBic("bic")
+                        .setIban("DE16700222000072880129").build())
+                .setCustomerData(TransferInstructionsProtos.CustomerData.newBuilder()
+                        .addLegalNames("merchant-sample-java").build())
+                .build();
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.plusYears(1);
+        String refId = generateNonce();
+
+        // generate CSRF token
+        String csrfToken = generateNonce();
+
+        // create the token request
+        TokenRequest request = TokenRequest
+                .standingOrderRequestBuilder(amount, currency, "MNTH", startDate.toString(),
+                        endDate.toString(), Collections.singletonList(destination))
+                .setDescription(description).setRefId(refId)
+                .setToAlias(merchantMember.firstAliasBlocking())
+                .setToMemberId(merchantMember.memberId()).setRedirectUrl("https://merchant-demo.com/gateway")
+                .setCsrfToken(csrfToken).build();
+
+        String requestId = merchantMember.storeTokenRequestBlocking(request);
+
+        // generate Token Request URL
+        return merchantMember.getBankAuthUrlBlocking(bankId, requestId);
+    }
+
     private static String initializeStandingOrderTokenRequestUrl(Map<String, String> params,
             String callbackUrl, Response response) {
         double amount = Double.parseDouble(params.get("amount"));
@@ -340,7 +373,7 @@ public class Application {
                 .setCustomerData(TransferInstructionsProtos.CustomerData.newBuilder()
                         .addLegalNames("merchant-sample-java").build())
                 .build();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = LocalDate.now().plusDays(3);
         LocalDate endDate = startDate.plusYears(1);
         String refId = generateNonce();
 
