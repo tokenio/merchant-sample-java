@@ -335,12 +335,13 @@ public class Application {
         String currency = "GBP";
         String description = "desc";
         TransferDestination destination = TransferDestination.newBuilder()
-                .setSepa(TransferDestination.Sepa.newBuilder().setBic("bic")
-                        .setIban("DE16700222000072880129").build())
+                .setFasterPayments(TransferDestination.FasterPayments.newBuilder()
+                        .setSortCode("236972")
+                        .setAccountNumber("07628161").build())
                 .setCustomerData(TransferInstructionsProtos.CustomerData.newBuilder()
-                        .addLegalNames("merchant-sample-java").build())
+                        .addLegalNames("Southside").build())
                 .build();
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = LocalDate.now().plusDays(3);
         LocalDate endDate = startDate.plusYears(1);
         String refId = generateNonce();
 
