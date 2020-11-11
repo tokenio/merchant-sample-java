@@ -3,22 +3,8 @@ package io.token.sample;
 import static com.google.common.base.Charsets.UTF_8;
 import static io.grpc.Status.Code.NOT_FOUND;
 import static io.token.TokenClient.TokenCluster.SANDBOX;
-import static io.token.proto.common.alias.AliasProtos.Alias.Type.EMAIL;
+import static io.token.proto.common.alias.AliasProtos.Alias.Type.DOMAIN;
 import static io.token.util.Util.generateNonce;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -39,6 +25,20 @@ import io.token.tokenrequest.TokenRequest.TransferBuilder;
 import io.token.tpp.Member;
 import io.token.tpp.TokenClient;
 import io.token.tpp.tokenrequest.TokenRequestCallback;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import spark.QueryParamsMap;
 import spark.Response;
@@ -425,7 +425,7 @@ public class Application {
         // with the domain and merchantMember ID for verification.
         // See https://developer.token.io/sdk/#aliases for more information.
         String email = "msjava-" + generateNonce().toLowerCase() + "+noverify@example.com";
-        Alias alias = Alias.newBuilder().setType(EMAIL).setValue(email).build();
+        Alias alias = Alias.newBuilder().setType(DOMAIN).setValue(email).build();
         Member member = tokenClient.createMemberBlocking(alias);
         // set merchantMember profile: the name and the profile picture
         member.setProfileBlocking(Profile.newBuilder().setDisplayNameFirst("Demo")
