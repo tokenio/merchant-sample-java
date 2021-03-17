@@ -428,8 +428,7 @@ public class Application {
         Alias alias = Alias.newBuilder().setType(DOMAIN).setValue(email).build();
         Member member = tokenClient.createMemberBlocking(alias);
         // set merchantMember profile: the name and the profile picture
-        member.setProfileBlocking(Profile.newBuilder().setDisplayNameFirst("Demo")
-                .setDisplayNameLast("Merchant").build());
+        member.setProfileNameBlocking("Demo Merchant");
         try {
             byte[] pict = Resources.toByteArray(Resources.getResource("southside.png"));
             member.setProfilePictureBlocking("image/png", pict);
